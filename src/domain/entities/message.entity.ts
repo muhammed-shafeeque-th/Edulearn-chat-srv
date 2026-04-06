@@ -5,14 +5,6 @@ export enum MessageType {
   IMAGE = 'image',
 }
 
-export enum MessageStatus {
-  SENDING = 'sending',
-  SENT = 'sent',
-  SEEN = 'seen',
-  DELIVERED = 'delivered',
-  READ = 'read',
-}
-
 export interface MessageReaction {
   id: string;
   userId: string;
@@ -22,189 +14,165 @@ export interface MessageReaction {
 
 export interface MessageProps {
   id: string;
-  conversationId: string;
+  chatId: string;
   senderId: string;
-  receiverId?: string;
   content: string;
+  sequence: number; // ordering
+  idempotencyKey: string; // idempotency
   type?: MessageType;
   timestamp?: Date;
-  status?: MessageStatus;
-  fileUrl?: string;
-  fileName?: string;
-  fileSize?: number;
-  replyTo?: string;
-  reactions?: MessageReaction[];
   editedAt?: Date;
+  deletedAt?: Date;
   readBy?: string[];
+  reactions?: MessageReaction[];
   metadata?: Record<string, any>;
 }
 
 export class Message {
-  // ----- Private Properties -----
-  private readonly _id: string;
-  private readonly _conversationId: string;
-  private readonly _senderId: string;
-  private readonly _receiverId?: string;
-  private _content: string;
-  private readonly _type: MessageType;
-  private readonly _timestamp: Date;
-  private _status: MessageStatus;
-  private readonly _fileUrl?: string;
-  private readonly _fileName?: string;
-  private readonly _fileSize?: number;
-  private readonly _replyTo?: string;
-  private readonly _reactions: MessageReaction[];
-  private readonly _metadata?: Record<string, any>;
-  private _editedAt?: Date;
+  private readonly _props: MessageProps;
   private readonly _readBy: Set<string>;
 
   constructor(props: MessageProps) {
-    if (!props.id?.trim()) {
-      throw new Error('Message ID is required.');
-    }
-    if (!props.conversationId?.trim()) {
-      throw new Error('Conversation ID is required.');
-    }
-    if (!props.senderId?.trim()) {
-      throw new Error('Sender ID is required.');
-    }
-    if (!props.content?.trim?.() && !props.fileUrl) {
-      throw new Error('Message content or fileUrl must be provided.');
-    }
-    if (!Object.values(MessageType).includes(props.type)) {
-      throw new Error('Invalid message type.');
-    }
+    if (!props.id?.trim()) throw new Error('Message id required');
+    if (!props.chatId?.trim()) throw new Error('chatId required');
+    if (!props.senderId?.trim()) throw new Error('senderId required');
+    if (!props.content?.trim()) throw new Error('content required');
+    if (!props.idempotencyKey?.trim())
+      throw new Error('idempotencyKey required');
+    if (!Number.isInteger(props.sequence) || props.sequence <= 0)
+      throw new Error('sequence must be positive integer');
 
-    this._id = props.id.trim();
-    this._conversationId = props.conversationId.trim();
-    this._senderId = props.senderId.trim();
-    this._receiverId = props.receiverId?.trim?.() || '';
-    this._content = props.content ?? '';
-    this._type = props.type;
-    this._timestamp =
-      props.timestamp instanceof Date
-        ? props.timestamp
-        : props.timestamp
-          ? new Date(props.timestamp)
-          : new Date();
-    this._status = props.status ?? MessageStatus.SENT;
-    this._fileUrl = props.fileUrl;
-    this._fileName = props.fileName;
-    this._fileSize = props.fileSize;
-    this._replyTo = props.replyTo;
-    this._reactions = props.reactions ? [...props.reactions] : [];
-    this._editedAt = props.editedAt ? new Date(props.editedAt) : undefined;
-    this._readBy = new Set(props.readBy ?? []);
-    this._metadata = props.metadata ? { ...props.metadata } : undefined;
+    this._props = {
+      id: props.id,
+      chatId: props.chatId,
+      senderId: props.senderId,
+      content: props.content,
+      sequence: props.sequence,
+      idempotencyKey: props.idempotencyKey,
+      type: props.type ?? MessageType.TEXT,
+      timestamp: props.timestamp ? new Date(props.timestamp) : new Date(),
+      reactions: props.reactions
+        ? props.reactions.map((r) => ({
+            ...r,
+            timestamp: new Date(r.timestamp),
+          }))
+        : [],
+      readBy: props.readBy ? [...props.readBy] : [],
+      editedAt: props.editedAt ? new Date(props.editedAt) : undefined,
+      deletedAt: props.deletedAt ? new Date(props.deletedAt) : undefined,
+      metadata: props.metadata ? { ...props.metadata } : undefined,
+    };
+    this._readBy = new Set(this._props.readBy ?? []);
   }
 
-  // ----- Accessor Properties -----
-  get id(): string {
-    return this._id;
+  get id() {
+    return this._props.id;
   }
-  get conversationId(): string {
-    return this._conversationId;
+  get chatId() {
+    return this._props.chatId;
   }
-  get senderId(): string {
-    return this._senderId;
+  get senderId() {
+    return this._props.senderId;
   }
-  get receiverId(): string {
-    return this._receiverId;
+  get content() {
+    return this._props.content;
   }
-  get content(): string {
-    return this._content;
+  get sequence() {
+    return this._props.sequence;
   }
-  get type(): MessageType {
-    return this._type;
+  get idempotencyKey() {
+    return this._props.idempotencyKey;
   }
-  get timestamp(): Date {
-    return this._timestamp;
+  get type() {
+    return this._props.type!;
   }
-  get status(): MessageStatus {
-    return this._status;
+  get timestamp() {
+    return this._props.timestamp!;
   }
-  get fileUrl(): string | undefined {
-    return this._fileUrl;
+  get editedAt() {
+    return this._props.editedAt;
   }
-  get fileName(): string | undefined {
-    return this._fileName;
+  get deletedAt() {
+    return this._props.deletedAt;
   }
-  get fileSize(): number | undefined {
-    return this._fileSize;
+  get reactions() {
+    // Always return a fresh array
+    return this._props.reactions
+      ? this._props.reactions.map((r) => ({ ...r }))
+      : [];
   }
-  get replyTo(): string | undefined {
-    return this._replyTo;
-  }
-  get reactions(): MessageReaction[] {
-    return [...this._reactions];
-  }
-  get editedAt(): Date | undefined {
-    return this._editedAt;
-  }
-  get readBy(): string[] {
+  get readBy() {
     return Array.from(this._readBy);
   }
-  get metadata(): Record<string, any> | undefined {
-    return this._metadata ? { ...this._metadata } : undefined;
+  get metadata() {
+    return this._props.metadata ? { ...this._props.metadata } : undefined;
   }
 
-  // ----- Public Methods -----
-  isReadBy(userId: string): boolean {
+  isReadBy(userId: string) {
     return this._readBy.has(userId);
   }
 
   markAsRead(userId: string): Message {
     if (this._readBy.has(userId)) return this;
-    const next = new Message({
-      ...this.toProps(),
-      readBy: [...this._readBy, userId],
-      status: MessageStatus.READ,
+    // Use toProps to ensure serialization doesn't nest _props
+    const props = this.toProps();
+    return new Message({
+      ...props,
+      readBy: [...(props.readBy ?? []), userId],
     });
-    return next;
   }
 
   editContent(newContent: string): Message {
-    if (newContent === this._content) return this;
+    if (!newContent?.trim()) throw new Error('content required');
+    const props = this.toProps();
     return new Message({
-      ...this.toProps(),
+      ...props,
       content: newContent,
       editedAt: new Date(),
     });
   }
 
   addReaction(reaction: MessageReaction): Message {
+    const props = this.toProps();
     return new Message({
-      ...this.toProps(),
-      reactions: [...this._reactions, reaction],
+      ...props,
+      reactions: [
+        ...(props.reactions ?? []),
+        { ...reaction, timestamp: new Date(reaction.timestamp) },
+      ],
     });
   }
 
-  /**
-   * Load/rehydrate a wishlist item from persistence/primitives.
-   */
-  static fromPrimitives(props: MessageProps): Message {
-    return new Message(props);
+  softDelete(): Message {
+    const props = this.toProps();
+    return new Message({ ...props, deletedAt: new Date() });
   }
 
-  // For repository/transport serialization
+  static fromPrimitives(props: MessageProps): Message {
+    return new Message({ ...props });
+  }
+
   toProps(): MessageProps {
     return {
-      id: this._id,
-      conversationId: this._conversationId,
-      senderId: this._senderId,
-      receiverId: this._receiverId,
-      content: this._content,
-      type: this._type,
-      timestamp: this._timestamp,
-      status: this._status,
-      fileUrl: this._fileUrl,
-      fileName: this._fileName,
-      fileSize: this._fileSize,
-      replyTo: this._replyTo,
-      reactions: [...this._reactions],
-      editedAt: this._editedAt,
-      readBy: Array.from(this._readBy),
-      metadata: this._metadata ? { ...this._metadata } : undefined,
+      id: this._props.id,
+      chatId: this._props.chatId,
+      senderId: this._props.senderId,
+      content: this._props.content,
+      sequence: this._props.sequence,
+      idempotencyKey: this._props.idempotencyKey,
+      type: this._props.type,
+      timestamp: this._props.timestamp
+        ? new Date(this._props.timestamp)
+        : undefined,
+      editedAt: this._props.editedAt
+        ? new Date(this._props.editedAt)
+        : undefined,
+      deletedAt: this._props.deletedAt
+        ? new Date(this._props.deletedAt)
+        : undefined,
+      readBy: this.readBy, // Use getter for readBy (Set to array)
+      reactions: this.reactions, // Use getter for reactions (array copy)
+      metadata: this.metadata ? { ...this.metadata } : undefined,
     };
   }
 }
