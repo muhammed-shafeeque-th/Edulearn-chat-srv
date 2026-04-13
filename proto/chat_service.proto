@@ -2,388 +2,313 @@ syntax = "proto3";
 
 package chat_service;
 
-
-import "google/protobuf/timestamp.proto";
-// import "ts_proto/options.proto"; // Import ts-proto options
-// CHAT SERVICE DEFINITION
-
 service ChatService {
-  // -------------------------
-  // Conversations
-  // -------------------------
+  // Chats
+  rpc CreateChat(CreateChatRequest) returns (ChatResponse);
+  rpc GetChat(GetChatRequest) returns (ChatResponse);
+  rpc DeleteChat(DeleteChatRequest) returns (Empty);
+  rpc ListStudentChats(ListStudentChatsRequest) returns (ChatsListResponse);
+  rpc ListInstructorChats(ListInstructorChatsRequest) returns (ChatsListResponse);
 
-  // Get existing or create new one-to-one conversation (student <-> instructor).
-  rpc CreateConversation(CreateConversationRequest)
-      returns (CreateConversationResponse);
+  rpc PinChat(PinChatRequest) returns (ChatResponse);
+  rpc UnPinChat(UnPinChatRequest) returns (ChatResponse);
+  rpc ArchiveChat(ArchiveChatRequest) returns (ChatResponse);
+  rpc UnArchiveChat(UnArchiveChatRequest) returns (ChatResponse);
+  rpc MuteChat(MuteChatRequest) returns (ChatResponse);
+  rpc UnMuteChat(UnMuteChatRequest) returns (ChatResponse);
 
-  // Get a single conversation by id.
-  rpc GetConversation(GetConversationRequest)
-      returns (GetConversationResponse);
+  // User Presence
+  rpc GetOnlineUsers(Empty) returns (OnlineUsersResponse);
 
-  rpc DeleteConversation(DeleteConversationRequest)
-      returns (Empty);
+  // Messages
+  rpc SendMessage(SendMessageRequest) returns (MessageResponse);
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
+  rpc EditMessage(EditMessageRequest) returns (MessageResponse);
+  rpc DeleteMessage(DeleteMessageRequest) returns (Empty);
+  rpc MarkMessagesRead(MarkMessagesReadRequest) returns (ChatResponse);
 
-  // List all conversations for a user (student or instructor).
-  rpc ListUserConversations(ListUserConversationsRequest)
-      returns (ListUserConversationsResponse);
-
-  rpc PinConversation(PinConversationRequest)
-      returns (ConversationResponse);
-
-  rpc UnPinConversation(UnPinConversationRequest)
-      returns (ConversationResponse);
-
-  rpc ArchiveConversation(ArchiveConversationRequest)
-      returns (ConversationResponse);
-
-  rpc UnArchiveConversation(UnArchiveConversationRequest)
-      returns (ConversationResponse);
-
-  // -------------------------
-  // Messaging
-  // -------------------------
-
-  rpc SendMessage(SendMessageRequest)
-      returns (SendMessageResponse);
-
-  // Fetch paginated messages for a conversation (chat history).
-  rpc GetMessages(GetMessagesRequest)
-      returns (GetMessagesResponse);
-
-  rpc EditMessage(EditMessageRequest)
-      returns (EditMessageResponse);
-
-  rpc DeleteMessage(DeleteMessageRequest)
-      returns (Empty);
-      
-  // -------------------------
   // Reactions
-  // -------------------------
+  rpc AddReaction(AddReactionRequest) returns (MessageResponse);
+  rpc RemoveReaction(RemoveReactionRequest) returns (MessageResponse);
 
-  rpc AddReaction(AddReactionRequest)
-      returns (MessageResponse);
-
-  rpc RemoveReaction(RemoveReactionRequest)
-      returns (MessageResponse);
-
-  // Update seen state when user actually reads the message.
-  rpc MarkMessagesRead(MarkMessagesReadRequest)
-      returns (ConversationResponse);
-
-  
+  // Discussion
+  rpc CreateOrGetDiscussionRoom(CreateDiscussionRoomRequest) returns (DiscussionRoomResponse);
+  rpc SendDiscussionMessage(SendDiscussionMessageRequest) returns (DiscussionMessageResponse);
+  rpc GetDiscussionMessages(GetDiscussionMessagesRequest) returns (GetDiscussionMessagesListResponse);
 }
 
-// Generic empty response
+// Generic Error Message
+message Error {
+  string code = 1; // e.g., "RESOURCE_NOT_FOUND", "INVALID_ARGUMENT", "UNAUTHENTICATED"
+  string message = 2;
+  repeated ErrorDetail details = 3; // Optional detailed error information
+}
+
+message ErrorDetail {
+  optional string field = 1;
+  string message = 2;
+}
+
 message Empty {}
 
 message PaginationRequest {
-  int32 page = 1;        // 1-based
-  int32 page_size = 2;   // items per page
+  int32 page = 1;
+  int32 page_size = 2;
 }
 
-message PaginationResponse {
-  int32 total_items = 1;
-  int32 total_pages = 2;
-}
-
-// ENUMS
-
-// enum MessageStatus {
-//   MESSAGE_STATUS_UNSPECIFIED = 0;
-//   SENT = 1;        // Saved to DB
-//   DELIVERED = 2;   // Delivered to device (via WS)
-//   SEEN = 3;        // User has opened/read
-// }
-// enum ConversationType {
-//   UNSPECIFIED = 0;
-//   DIRECT = 1;        // Saved to DB
-//   GROUP = 2;   // Delivered to device (via WS)
-// }
-
-// ENTITY DEFINITIONS
-
-message Conversation {
+message ChatData {
   string id = 1;
-  string student_id = 2;
-  string type = 6;
-  repeated string participants = 3;
-  int64 created_at = 4;
-  int64 updated_at = 5;
-   // Settings
-  bool isPinned = 11;
-  bool isMuted = 12;
-  bool isArchived = 13;
-  int64 mutedUntil = 14;
+  string student_id = 3;
+  string instructor_id = 4;
+  string created_at = 5;
+  string updated_at = 6;
+  string last_message_id = 7;
 
+  // viewer specific
+  bool is_pinned = 20;
+  bool is_archived = 21;
+  bool is_muted = 22;
 }
+
 message MessageReaction {
-  string id = 3;
-  string user_id = 1;
-  string emoji = 12;
-  int64 timestamp = 2;
+  string id = 1;
+  string user_id = 2;
+  string emoji = 3;
+  int64 timestamp = 4;
 }
 
-message Message {
+message MessageData {
   string id = 1;
-  string conversation_id = 2;
+  string chat_id = 2;
   string sender_id = 3;
-  string content = 5;
-  string status = 6;
-  int64 created_at = 7;
-  int64 updated_at = 8;
-  optional string receiver_id = 4;
-  optional string type = 14;
-  optional string file_name = 10;
-  optional string file_url = 18;
-  optional string file_size = 17;
-  optional string replay_to = 12;
-  repeated MessageReaction reactions = 16;
+  string content = 4;
+  string created_at = 5;
+  string updated_at = 6;
 
+  int64 sequence = 10;
+  repeated MessageReaction reactions = 20;
+}
+
+// --- Requests
+
+message CreateChatRequest {
+  string student_id = 1;
+  string instructor_id = 2;
+  string role = 3;
+}
+
+message ChatResponse {
+  oneof result {
+      ChatData chat = 1;
+      Error error = 2 ;
   }
-
-
-message MessageResponse {
-  string id = 1;
-  string conversation_id = 2;
-  string sender_id = 3;
-  string content = 5;
-  string status = 6;
-  int64 created_at = 7;
-  int64 updated_at = 8;
-  optional string receiver_id = 4;
-  optional string type = 14;
-  optional string file_name = 10;
-  optional string file_url = 18;
-  optional string file_size = 17;
-  optional string replay_to = 12;
-  repeated MessageReaction reactions = 44;
 }
 
-// A student ↔ instructor conversation
-message ConversationResponse {
-  string id = 1;
-  string student_id = 2;
-  string type = 6;
-  repeated string participants = 3;
-  int64 created_at = 4;
-  int64 updated_at = 5;
-   // Settings
-  bool isPinned = 11;
-  bool isMuted = 12;
-  bool isArchived = 13;
-  int64 mutedUntil = 14;
-
-}
-
-///////////////////////////////////////////////
-// Conversation RPC Messages
-///////////////////////////////////////////////
-
-message CreateConversationRequest {
-  // Domain-specific: 1:1 conversation between these two
-  string user_id = 1;
-  string other_user_id = 2;
-  string role = 4;
-
-  // Optional for future: explicit type.
-  string type = 3;
-}
-
-message CreateConversationResponse {
-  Conversation conversation = 1;
-}
-
-message GetConversationRequest {
-  string conversation_id = 1;
-  string user_id = 2;
-}
-message DeleteConversationRequest {
-  string conversation_id = 1;
+message GetChatRequest {
+  string chat_id = 1;
   string user_id = 2;
 }
 
-message GetConversationResponse {
-  Conversation conversation = 1;
+
+message DeleteChatRequest {
+  string chat_id = 1;
+  string user_id = 2;
 }
 
-message ListUserConversationsRequest {
-  // The user whose conversations we are listing (student or instructor).
-  string user_id = 1;
-
-  // Optional filter: if you only want conversations where user is student/instructor.
-  // Could be "student" / "instructor" or role from your auth system.
-  // string role = 2;
-
-  PaginationRequest pagination = 3;
-}
-
-message ListUserConversationsResponse {
-  repeated Conversation conversations = 1;
-  int32 total = 2;
-}
-
-///////////////////////////////////////////////
-// Messaging RPC Messages
-///////////////////////////////////////////////
-
-message SendMessageRequest {
-  string conversation_id = 1; // optional; generated if empty
-
-  string sender_id = 2;       // user sending message
-  string receiver_id = 3;
-  optional string type = 9;
-  map<string, string> metadata = 8;
-
-  string student_id = 4;      // required for deterministic conv creation
-  string instructor_id = 5;
-
-  string content = 6;
-}
-
-message SendMessageResponse {
-  Message message = 1;       // stored message
-}
-
-// Paginated chat history request
-message GetMessagesRequest {
-  string conversation_id = 1;
-  string user_id = 3;
+message ListStudentChatsRequest {
+  string student_id = 1;
   PaginationRequest pagination = 2;
 }
 
-message DeleteMessageRequest {
-  string conversation_id = 1;
-  string message_id = 2;
-  string user_id = 4;
-  bool for_every_one = 3;
+message ListInstructorChatsRequest {
+  string instructor_id = 1;
+  PaginationRequest pagination = 2;
 }
-message EditMessageRequest {
-  string conversation_id = 1;
-  string message_id = 2;
-  string user_id = 4;
+
+message ChatsResponse {
+  repeated ChatData chats = 1;
+  int32 total = 2;
+}
+
+
+message ChatsListResponse {
+  oneof result {
+      ChatsResponse chats = 1;
+      Error error = 2 ;
+  }
+
+}
+
+message PinChatRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+message UnPinChatRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+
+message ArchiveChatRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+message UnArchiveChatRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+
+message MuteChatRequest {
+  string chat_id = 1;
+  string user_id = 2;
+  optional int64 duration_seconds = 3;
+}
+message UnMuteChatRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+
+// Messages
+
+message SendMessageRequest {
+  string chat_id = 1;
+  string sender_id = 2;
   string content = 3;
+
+  // client generates idempotencyKey per message
+  string idempotency_key = 4;
 }
-message AddReactionRequest {
-  string conversation_id = 1;
-  string message_id = 2;
-  string user_id = 4;
-  string emoji = 3;
+
+message GetMessagesRequest {
+  string chat_id = 1;
+  string user_id = 2;
+  PaginationRequest pagination = 3;
 }
-message RemoveReactionRequest {
-  string conversation_id = 1;
-  string message_id = 2;
-  string user_id = 4;
-  string reaction_id = 3;
+message MessagesResponse {
+  repeated MessageData messages = 1;
+  int32 total = 2;
+
 }
 
 message GetMessagesResponse {
-  repeated Message messages = 1;
-  int32 total = 2;
+  oneof result {
+      MessagesResponse messages = 1;
+      Error error = 2 ;
+  }
 }
-message EditMessageResponse {
-   Message messages = 1;
+message OnlineUsersResponse {
+  oneof result {
+      OnlineUsers success = 1;
+      Error error = 2 ;
+  }
 }
 
-// Mark message delivered (persistent)
-message MarkMessageDeliveredRequest {
+message EditMessageRequest {
+  string chat_id = 1;
+  string message_id = 2;
+  string user_id = 3;
+  string content = 4;
+}
+
+message OnlineUsers {
+  repeated string users = 1;
+}
+
+message MessageResponse {
+  oneof result {
+    MessageData message = 1;
+    Error error = 2;
+  }
+}
+
+message DeleteMessageRequest {
   string message_id = 1;
+  string user_id = 2;
+  bool for_every_one = 3;
 }
 
 message MarkMessagesReadRequest {
+  string chat_id = 1;
+  string user_id = 2;
+}
+
+// Reactions
+
+message AddReactionRequest {
   string message_id = 1;
   string user_id = 2;
-  string conversation_id = 3;
+  string emoji = 3;
 }
 
-message PinConversationRequest {
-  string conversation_id = 1;
+message RemoveReactionRequest {
+  string message_id = 1;
   string user_id = 2;
+  string reaction_id = 3;
 }
 
-message UnPinConversationRequest {
-  string conversation_id = 1;
+// ─── Discussion ──────────────────────────────────────────────
+
+message DiscussionRoomData {
+  string id = 1;
+  string course_id = 2;
+  string instructor_id = 3;
+  string created_at = 4;
+  string updated_at = 5;
+}
+
+message DiscussionMessageData {
+  string id = 1;
+  string room_id = 2;
+  string sender_id = 3;
+  string sender_role = 4;
+  string content = 5;
+  int64 sequence = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message CreateDiscussionRoomRequest {
+  string course_id = 1;
   string user_id = 2;
+  string user_role = 3;
 }
 
-message MuteConversationRequest {
-  string conversation_id = 1;
+message DiscussionRoomResponse {
+  oneof result {
+    DiscussionRoomData room = 1;
+    Error error = 2;
+  }
+}
+
+message SendDiscussionMessageRequest {
+  string room_id = 1;
+  string sender_id = 2;
+  string sender_role = 3;
+  string content = 4;
+  string idempotency_key = 5;
+}
+
+message DiscussionMessageResponse {
+  oneof result {
+    DiscussionMessageData message = 1;
+    Error error = 2;
+  }
+}
+
+message GetDiscussionMessagesRequest {
+  string room_id = 1;
   string user_id = 2;
-  optional int64 duration = 3;
-}
-
-message UnMuteConversationRequest {
-  string conversation_id = 1;
-  string user_id = 2;
-}
-
-message ArchiveConversationRequest {
-  string conversation_id = 1;
-  string user_id = 2;
-}
-
-message UnArchiveConversationRequest {
-  string conversation_id = 1;
-  string user_id = 2;
-}
-
-// Search messages inside a conversation or across conversations
-message SearchMessagesRequest {
-  string user_id = 1;          // user performing search
-  string query = 2;            // search text
   PaginationRequest pagination = 3;
 }
 
-message SearchMessagesResponse {
-  repeated Message results = 1;
+message DiscussionMessagesResponse {
+  repeated DiscussionMessageData messages = 1;
   int32 total = 2;
 }
 
-// TYPING EVENT (BACKEND-LEVEL)
-
-// // Note: UI typing events use WebSocket.
-// // gRPC version is only for backend workflows (optional)
-// message SendTypingEventRequest {
-//   string conversation_id = 1;
-//   string user_id = 2;
-//   bool is_typing = 3;
-// }
-
-// // PRESENCE (ONLINE/OFFLINE)
-
-// message UpdatePresenceRequest {
-//   string user_id = 1;
-//   bool is_online = 2;
-// }
-
-// message GetUserPresenceRequest {
-//   string user_id = 1;
-// }
-
-// message GetUserPresenceResponse {
-//   string user_id = 1;
-//   bool is_online = 2;
-//   int64 last_seen_at = 3;
-// }
-
-// // SERVER-TO-SERVER STREAMING
-
-// // Subscribe to NEW message events (internal microservices)
-// message StreamMessagesRequest {
-//   string conversation_id = 1; // subscribe to a specific chat
-// }
-
-// // User event types for streaming
-// message UserEvent {
-//   string user_id = 1;
-//   string event_type = 2; // "typing", "online", "offline", "seen", "delivered"
-//   string metadata = 3;   // optional JSON payload
-// }
-
-// // Subscribe to user events stream
-// message StreamUserEventsRequest {
-//   // Subscribe to all events for a specific user (or all if empty).
-//   string user_id = 1;
-// }
-
-
+message GetDiscussionMessagesListResponse {
+  oneof result {
+    DiscussionMessagesResponse messages = 1;
+    Error error = 2;
+  }
+}
 
