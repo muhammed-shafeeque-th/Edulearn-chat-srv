@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ChatUserState } from 'src/domain/entities/chat-user-state.entity';
-import { ChatUserStateRepository } from 'src/domain/repositories/chat-user.repository';
+import { IChatUserStateRepository } from 'src/domain/repositories/chat-user.repository';
 import { ChatUserStateDocument } from '../schemas/chat-user-state.schema';
 
 @Injectable()
-export class MongoDbChatUserStateRepository implements ChatUserStateRepository {
+export class MongoDbChatUserStateRepository
+  implements IChatUserStateRepository
+{
   constructor(
     @InjectModel(ChatUserStateDocument.name)
     private readonly stateModel: Model<ChatUserStateDocument>,

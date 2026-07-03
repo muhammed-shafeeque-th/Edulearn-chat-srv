@@ -2,17 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { DiscussionRoomRepository } from 'src/domain/repositories/discussion-room.repository';
+import { IDiscussionRoomRepository } from 'src/domain/repositories/discussion-room.repository';
 import { DiscussionRoom } from 'src/domain/entities/discussion.entity';
 import { DiscussionRoomDocument } from '../schemas/discussion-room.schema';
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
+import { ILoggerService } from 'src/application/ports/logger.service';
 
 @Injectable()
 export class MongoDbDiscussionRoomRepository
-  implements DiscussionRoomRepository
+  implements IDiscussionRoomRepository
 {
   constructor(
-    private readonly logger: LoggingService,
+    private readonly logger: ILoggerService,
     @InjectModel(DiscussionRoomDocument.name)
     private readonly roomModel: Model<DiscussionRoomDocument>,
   ) {}
