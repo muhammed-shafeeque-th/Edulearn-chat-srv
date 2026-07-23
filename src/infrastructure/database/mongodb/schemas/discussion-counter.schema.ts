@@ -4,7 +4,7 @@ import { Document } from 'mongoose';
 @Schema({ collection: 'discussion_counters' })
 export class DiscussionCounterDocument extends Document {
   @Prop({ required: true, unique: true })
-  _id: string; // roomId
+  declare _id: string; // roomId
 
   @Prop({ required: true, default: 0 })
   sequence: number;
