@@ -5,19 +5,20 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
+import { ILoggerService } from 'src/application/ports/logger.service';
 import { GRPC_USER_CLIENT_TOKEN } from './constants';
 import { UserServiceClient } from '../../generated/user_service';
-import { ClientServiceException } from 'src/domain/exceptions/domain.exception';
 import { IsStudentOfInstructorResponse } from '../../generated/user/types/instructor_student';
+import { ClientServiceException } from 'src/shared/exceptions/infra.exceptions';
+import { IUserClient } from './user-client.interface';
 
 @Injectable()
-export class UserClient implements OnModuleDestroy, OnModuleInit {
+export class UserClient implements IUserClient, OnModuleDestroy, OnModuleInit {
   private userService!: UserServiceClient;
 
   constructor(
     @Inject(GRPC_USER_CLIENT_TOKEN) private readonly client: ClientGrpc,
-    private readonly logger: LoggingService,
+    private readonly logger: ILoggerService,
   ) {}
 
   onModuleInit(): void {

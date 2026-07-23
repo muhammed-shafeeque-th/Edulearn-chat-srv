@@ -6,26 +6,29 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
+import { ILoggerService } from 'src/application/ports/logger.service';
 import { GRPC_COURSE_CLIENT_TOKEN } from './constants';
 import {
   CourseServiceClient,
   EnrollmentServiceClient,
 } from 'src/infrastructure/grpc/generated/course_service';
-import { ClientServiceException } from 'src/domain/exceptions/domain.exception';
 import { CheckEnrollmentResponse } from '../../generated/course/types/enrollment';
 import { CourseResponse } from '../../generated/course/types/course';
-import { RedisService } from 'src/infrastructure/redis/redis.service';
+import { ClientServiceException } from 'src/shared/exceptions/infra.exceptions';
+import { ICacheService } from 'src/application/ports/cache.service';
+import { ICourseClient } from './course-client.interface';
 
 @Injectable()
-export class CourseClient implements OnModuleDestroy, OnModuleInit {
+export class CourseClient
+  implements ICourseClient, OnModuleDestroy, OnModuleInit
+{
   private enrollmentService!: EnrollmentServiceClient;
   private courseService!: CourseServiceClient;
 
   constructor(
     @Inject(GRPC_COURSE_CLIENT_TOKEN) private readonly client: ClientGrpc,
-    private readonly logger: LoggingService,
-    private readonly redisService: RedisService,
+    private readonly logger: ILoggerService,
+    private readonly cache: ICacheService,
   ) {}
 
   onModuleInit(): void {
@@ -42,7 +45,6 @@ export class CourseClient implements OnModuleDestroy, OnModuleInit {
 
   /**
    * Checks if a user is enrolled in a given course.
-   * Validates input, calls gRPC, and throws descriptive errors if invalid or any error occurs.
    */
   async checkCourseEnrollment(
     courseId: string,
@@ -63,7 +65,6 @@ export class CourseClient implements OnModuleDestroy, OnModuleInit {
     }
 
     try {
-      // Use observable and handle error, do not perform unnecessary manual promise/conversion
       const response: CheckEnrollmentResponse = await new Promise(
         (resolve, reject) => {
           const observable = this.enrollmentService.checkCourseEnrollment({
@@ -72,7 +73,6 @@ export class CourseClient implements OnModuleDestroy, OnModuleInit {
           });
           const subscription = observable.subscribe({
             next: (res: CheckEnrollmentResponse) => {
-              // Handle application-level errors sent inside response
               if (res.error) {
                 this.logger.warn(
                   'Received error from enrollmentService.checkCourseEnrollment',
@@ -136,7 +136,7 @@ export class CourseClient implements OnModuleDestroy, OnModuleInit {
     const CACHE_TTL = 10 * 60;
     const cacheKey = `course_info:${courseId}`;
 
-    const cacheResult = await this.redisService.get(cacheKey);
+    const cacheResult = await this.cache.get(cacheKey);
     if (cacheResult) {
       return {
         id: cacheResult.id,
@@ -207,7 +207,7 @@ export class CourseClient implements OnModuleDestroy, OnModuleInit {
         status,
         price,
       };
-      await this.redisService.set(cacheKey, courseInfo, CACHE_TTL);
+      await this.cache.set(cacheKey, courseInfo, CACHE_TTL);
 
       return courseInfo;
     } catch (err: any) {
