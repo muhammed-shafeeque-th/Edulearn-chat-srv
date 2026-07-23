@@ -4,7 +4,7 @@ import { Document } from 'mongoose';
 @Schema({ timestamps: true, collection: 'discussion_rooms' })
 export class DiscussionRoomDocument extends Document {
   @Prop({ required: true })
-  _id: string;
+  declare _id: string;
 
   @Prop({ required: true, unique: true, index: true })
   courseId: string;

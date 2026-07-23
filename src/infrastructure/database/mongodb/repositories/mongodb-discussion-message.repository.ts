@@ -2,14 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
 
-import { DiscussionMessageRepository } from 'src/domain/repositories/discussion-message.repository';
+import { IDiscussionMessageRepository } from 'src/domain/repositories/discussion-message.repository';
 import { DiscussionMessage } from 'src/domain/entities/discussion.entity';
 import { DiscussionMessageDocument } from '../schemas/discussion-message.schema';
 import { DiscussionCounterDocument } from '../schemas/discussion-counter.schema';
 
 @Injectable()
 export class MongoDbDiscussionMessageRepository
-  implements DiscussionMessageRepository
+  implements IDiscussionMessageRepository
 {
   private readonly logger = new Logger(MongoDbDiscussionMessageRepository.name);
 

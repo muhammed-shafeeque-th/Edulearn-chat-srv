@@ -1,69 +1,72 @@
-import { Injectable, Inject, OnModuleDestroy } from '@nestjs/common';
-import { RedisClientType } from 'redis';
-import { REDIS_CLIENT } from './constants';
+import { Injectable } from '@nestjs/common';
+import { CacheService } from '@edulearn/nest';
+import { ICacheService } from '@/application/ports/cache.service';
+import { ILoggerService } from '@/application/ports/logger.service';
 
-/**
- * Best-practice, generic Redis service that serializes/deserializes
- * complex values and returns correctly typed objects.
- */
 @Injectable()
-export class RedisService implements OnModuleDestroy {
+export class RedisClientImpl implements ICacheService {
   constructor(
-    @Inject(REDIS_CLIENT)
-    private readonly _client: RedisClientType,
+    private readonly _cache: CacheService,
+    private readonly _logger: ILoggerService,
   ) {}
 
-  get client(): RedisClientType {
-    return this._client;
+  async set<T>(key: string, value: T, ttl = 3600): Promise<void> {
+    return this._cache.set(key, value, ttl);
   }
 
-  /**
-   * Graceful connection shutdown.
-   */
-  async onModuleDestroy() {
-    await this._client.quit();
+  async get<T>(key: string): Promise<T | null> {
+    return this._cache.get(key);
   }
 
-  /**
-   * Set a key with a value (any type), optionally with a TTL (in seconds).
-   * Values are automatically stringified to JSON.
-   */
-  async set<T = any>(key: string, value: T, ttl?: number): Promise<void> {
-    const strValue = JSON.stringify(value);
-    if (ttl) {
-      await this._client.setEx(key, ttl, strValue);
-    } else {
-      await this._client.set(key, strValue);
-    }
+  async ping(): Promise<void> {
+    this._cache.ping();
   }
 
-  /**
-   * Get a value by key. Automatically parses JSON to the provided type.
-   */
-  async get<T = any>(key: string): Promise<T | null> {
-    const raw = await this._client.get(key);
-    if (raw === null) return null;
-    try {
-      return JSON.parse(raw) as T;
-    } catch {
-      // fallback if value is not JSON
-      return raw as unknown as T;
-    }
-  }
-
-  /**
-   * Delete a key.
-   */
   async del(key: string): Promise<void> {
-    await this._client.del(key);
+    return this._cache.delete(key);
   }
 
-  /**
-   * Check whether a key exists.
-   */
+  get client() {
+    return this._cache.getClient();
+  }
+
   async exists(key: string): Promise<boolean> {
-    const result = await this._client.exists(key);
-    return result === 1;
+    return this._cache.exists(key);
+  }
+
+  async mget<T>(keys: string[]): Promise<(T | null)[]> {
+    return this._cache.getMultiple(keys);
+  }
+
+  async delByPattern(pattern: string): Promise<void> {
+    try {
+      const stream = this._cache.getClient().scanStream({
+        match: pattern,
+        count: 100, // adjust batch size depending on key volume
+      });
+
+      let deletedCount = 0;
+      const pipeline = this._cache.getClient().pipeline();
+
+      for await (const keys of stream) {
+        if (Array.isArray(keys) && keys.length) {
+          keys.forEach((key: string) => pipeline.del(key));
+          const results = await pipeline.exec();
+          deletedCount += Array.isArray(results) ? results.length : 0;
+        }
+      }
+
+      this._logger.debug(
+        `Deleted ${deletedCount} keys matching pattern "${pattern}"`,
+        { ctx: 'RedisClient' },
+      );
+    } catch (error: any) {
+      this._logger.warn(
+        `Failed to delete keys by pattern "${pattern}": ${error.message}`,
+        { error, ctx: 'RedisClient' },
+      );
+      throw error;
+    }
   }
 
   /**
@@ -71,14 +74,14 @@ export class RedisService implements OnModuleDestroy {
    */
   async hSet<T = any>(key: string, field: string, value: T): Promise<void> {
     const strValue = JSON.stringify(value);
-    await this._client.hSet(key, field, strValue);
+    await this._cache.getClient().hset(key, field, strValue);
   }
 
   /**
    * Get a field from a hash. Attempts to parse it as JSON.
    */
   async hGet<T = any>(key: string, field: string): Promise<T | null> {
-    const raw = await this._client.hGet(key, field);
+    const raw = await this._cache.getClient().hget(key, field);
     if (raw === null) return null;
     try {
       return JSON.parse(raw) as T;
@@ -91,7 +94,7 @@ export class RedisService implements OnModuleDestroy {
    * Get all fields and values in a hash, parsing values as JSON.
    */
   async hGetAll<T = any>(key: string): Promise<Record<string, T>> {
-    const result = await this._client.hGetAll(key);
+    const result = await this._cache.getClient().hgetall(key);
     Object.keys(result).forEach((field) => {
       try {
         result[field] = JSON.parse(result[field]);
@@ -106,6 +109,6 @@ export class RedisService implements OnModuleDestroy {
    * Delete a hash field.
    */
   async hDel(key: string, field: string): Promise<void> {
-    await this._client.hDel(key, field);
+    await this._cache.getClient().hdel(key, field);
   }
 }

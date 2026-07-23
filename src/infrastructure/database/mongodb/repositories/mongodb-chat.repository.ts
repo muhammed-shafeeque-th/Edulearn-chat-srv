@@ -2,15 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
 
-import { ChatRepository } from 'src/domain/repositories/chat.repository';
+import { IChatRepository } from 'src/domain/repositories/chat.repository';
 import { Chat } from 'src/domain/entities/chat.entity';
 import { ChatDocument } from '../schemas/chat.schema';
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
+import { ILoggerService } from 'src/application/ports/logger.service';
 
 @Injectable()
-export class MongoDbChatRepository implements ChatRepository {
+export class MongoDbChatRepository implements IChatRepository {
   constructor(
-    private readonly logger: LoggingService,
+    private readonly logger: ILoggerService,
     @InjectModel(ChatDocument.name)
     private readonly chatModel: Model<ChatDocument>,
   ) {}
