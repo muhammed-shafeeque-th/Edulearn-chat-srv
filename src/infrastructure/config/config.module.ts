@@ -8,8 +8,10 @@ import { AppConfigService } from './config.service';
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
-      cache: true, // Enable caching for better performance
+      ...(process.env.NODE_ENV === 'development'
+        ? { envFilePath: '.env' }
+        : { ignoreEnvFile: true }),
+      cache: true,
       // validate: validate,
     }),
   ],
