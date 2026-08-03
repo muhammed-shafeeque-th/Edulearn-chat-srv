@@ -7,6 +7,6 @@ export type ChatEvent =
   | { type: 'message.deleted'; payload: any }
   | { type: 'messages.read'; payload: any };
 
-export abstract class ChatEventBusPort {
+export abstract class IChatEventBusPort {
   abstract publish(event: TopicPayloads): Promise<void>;
 }
