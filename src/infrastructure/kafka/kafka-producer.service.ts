@@ -8,18 +8,18 @@ import { ClientKafka } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { randomUUID } from 'crypto';
 
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
 import { KAFKA_CLIENT } from './constants';
-import { ChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
+import { IChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
 import { TopicPayloads } from './kafka-topic-payload';
+import { ILoggerService } from 'src/application/ports/logger.service';
 
 @Injectable()
 export class KafkaProducerImpl
-  implements ChatEventBusPort, OnModuleInit, OnModuleDestroy
+  implements IChatEventBusPort, OnModuleInit, OnModuleDestroy
 {
   constructor(
     @Inject(KAFKA_CLIENT) private readonly kafkaClient: ClientKafka,
-    private readonly logger: LoggingService,
+    private readonly logger: ILoggerService,
   ) {}
 
   async onModuleInit() {
