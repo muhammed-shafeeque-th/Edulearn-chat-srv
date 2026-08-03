@@ -22,7 +22,7 @@ async function bootstrap() {
     transport: Transport.GRPC,
     options: {
       package: 'chat_service',
-      protoPath: [path.join(getProtoPath('chat'))],
+      protoPath: [getProtoPath('chat')],
       loader: {
         includeDirs: [path.join(PROTO_ROOT_DIR, 'chat')],
       },
@@ -78,7 +78,7 @@ async function bootstrap() {
 
   logger.log(`Microservices started`, { ctx: 'Bootstrap' });
   // Start HTTP server
-  const port = config.apiPort || 3009;
+  const port = config.httpPort || 3009;
   await app.listen(port);
   logger.log(`HTTP server listening on port ${port}`, { ctx: 'Bootstrap' });
 }
