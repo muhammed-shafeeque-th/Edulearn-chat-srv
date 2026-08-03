@@ -16,7 +16,6 @@ import { MongoDbDatabaseModule } from '../database/mongodb/database.module';
     HealthModule.forRootAsync({
       useFactory: (config: AppConfigService) => ({
         serviceName: config.serviceName,
-        
       }),
       inject: [AppConfigService],
       imports: [RedisModule, KafkaModule, MongoDbDatabaseModule],

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { finalize, Observable, tap } from 'rxjs';
 import { Metadata } from '@grpc/grpc-js';
-import { context, propagation, trace } from '@opentelemetry/api';
+import { context, propagation } from '@opentelemetry/api';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { IMetricService } from 'src/application/ports/metric.service';
 

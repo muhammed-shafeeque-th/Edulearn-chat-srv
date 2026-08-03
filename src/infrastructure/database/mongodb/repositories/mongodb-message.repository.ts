@@ -90,7 +90,8 @@ export class MongoDbMessageRepository implements IMessageRepository {
       return this.toDomain(savedDoc);
     } catch (err: any) {
       this.logger.error(
-        `Failed to save message with ID ${message.id}: ${err.message}`, err, 
+        `Failed to save message with ID ${message.id}: ${err.message}`,
+        err,
       );
       throw err;
     }

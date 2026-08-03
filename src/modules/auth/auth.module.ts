@@ -5,7 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
 
-
 @Module({
   imports: [
     JwtModule.registerAsync({

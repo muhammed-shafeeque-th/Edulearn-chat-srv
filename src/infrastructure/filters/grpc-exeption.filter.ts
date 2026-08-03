@@ -1,5 +1,5 @@
 import {
-  ArgumentsHost,
+  // ArgumentsHost,
   BadRequestException,
   Catch,
   ExceptionFilter,
@@ -14,7 +14,7 @@ import { ILoggerService } from 'src/application/ports/logger.service';
 export class GrpcExceptionFilter implements ExceptionFilter {
   constructor(private readonly logger: ILoggerService) {}
 
-  catch(exception: any, _host: ArgumentsHost) {
+  catch(exception: any) {
     // const _ctx = host.switchToRpc();
 
     let code = status.INTERNAL;
