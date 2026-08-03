@@ -1,6 +1,6 @@
 import { DiscussionMessage } from '../entities/discussion.entity';
 
-export abstract class DiscussionMessageRepository {
+export abstract class IDiscussionMessageRepository {
   abstract findById(id: string): Promise<DiscussionMessage | null>;
   abstract findByRoomId(
     roomId: string,

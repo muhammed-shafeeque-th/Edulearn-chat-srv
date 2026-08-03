@@ -1,6 +1,6 @@
 import { Chat } from '../entities/chat.entity';
 
-export abstract class ChatRepository {
+export abstract class IChatRepository {
   /**
    * Finds a chat by its ID.
    * @param id Chat ID
