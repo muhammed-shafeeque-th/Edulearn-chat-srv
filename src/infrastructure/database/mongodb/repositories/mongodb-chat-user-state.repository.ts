@@ -6,9 +6,7 @@ import { IChatUserStateRepository } from 'src/domain/repositories/chat-user.repo
 import { ChatUserStateDocument } from '../schemas/chat-user-state.schema';
 
 @Injectable()
-export class MongoDbChatUserStateRepository
-  implements IChatUserStateRepository
-{
+export class MongoDbChatUserStateRepository implements IChatUserStateRepository {
   constructor(
     @InjectModel(ChatUserStateDocument.name)
     private readonly stateModel: Model<ChatUserStateDocument>,
