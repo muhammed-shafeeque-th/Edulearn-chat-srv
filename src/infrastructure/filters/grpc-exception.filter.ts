@@ -1,21 +1,16 @@
-import {
-  ArgumentsHost,
-  BadRequestException,
-  Catch,
-  ExceptionFilter,
-} from '@nestjs/common';
-import { LoggingService } from '../observability/logging/logging.service';
+import { BadRequestException, Catch, ExceptionFilter } from '@nestjs/common';
 import { status, Metadata as GrpcMetadata } from '@grpc/grpc-js';
 import { RpcException } from '@nestjs/microservices';
 import { throwError } from 'rxjs';
 import { GrpcExceptionMapper } from './grpc-exception.mapper';
 import { BaseException } from 'src/shared/exceptions/base-exception';
+import { ILoggerService } from 'src/application/ports/logger.service';
 
 @Catch()
 export class GrpcExceptionFilter implements ExceptionFilter {
-  constructor(private readonly logger: LoggingService) {}
+  constructor(private readonly logger: ILoggerService) {}
 
-  catch(exception: any, _host: ArgumentsHost) {
+  catch(exception: any) {
     // const _ctx = host.switchToRpc();
 
     let code = status.INTERNAL;
