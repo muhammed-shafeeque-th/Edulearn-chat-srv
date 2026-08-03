@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ChatGateway } from './chat.gateway';
 import { RedisModule } from 'src/infrastructure/redis/redis.module';
 import { AuthModule } from 'src/modules/auth/auth.module';
-import { PresenceService } from 'src/infrastructure/redis/presence.repository';
+import { PresenceService } from 'src/infrastructure/redis/presence.service';
 import { ChatServiceModule } from 'src/application/services/chat-service.module';
 
 @Module({
