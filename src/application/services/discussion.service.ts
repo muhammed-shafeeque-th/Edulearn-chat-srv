@@ -1,31 +1,34 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DiscussionRoomRepository } from 'src/domain/repositories/discussion-room.repository';
-import { CourseClient } from 'src/infrastructure/grpc/clients/course/course.client';
-import { RedisService } from 'src/infrastructure/redis/redis.service';
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
+import { Injectable } from '@nestjs/common';
+import { IDiscussionRoomRepository } from 'src/domain/repositories/discussion-room.repository';
+import { DiscussionRoomNotFoundException } from 'src/domain/exceptions/discussion.exceptions';
+import { ILoggerService } from '../ports/logger.service';
+import { ICacheService } from '../ports/cache.service';
+import { ICourseClient } from 'src/infrastructure/grpc/clients/course/course-client.interface';
 
 @Injectable()
 export class DiscussionService {
   constructor(
-    private readonly roomRepository: DiscussionRoomRepository,
-    private readonly courseClient: CourseClient,
-    private readonly redisService: RedisService,
-    private readonly logger: LoggingService,
+    private readonly _roomRepository: IDiscussionRoomRepository,
+    private readonly _courseClient: ICourseClient,
+    private readonly _redisService: ICacheService,
+    private readonly _logger: ILoggerService,
   ) {}
 
   async canAccessDiscussion(roomId: string, userId: string): Promise<boolean> {
-    const room = await this.roomRepository.findById(roomId);
+    const room = await this._roomRepository.findById(roomId);
     if (!room) {
-      throw new NotFoundException(`Discussion room ${roomId} not found`);
+      throw new DiscussionRoomNotFoundException(
+        `Discussion room ${roomId} not found`,
+      );
     }
 
     const { courseId } = room;
     const cacheKey = `discussion_auth:${courseId}:${userId}`;
 
     // Check Redis Cache
-    const cachedAuth = await this.redisService.get<boolean>(cacheKey);
+    const cachedAuth = await this._redisService.get<boolean>(cacheKey);
     if (cachedAuth !== null) {
-      this.logger.debug(
+      this._logger.debug(
         `Cache hit for discussion auth ${userId} in ${courseId}: ${cachedAuth}`,
       );
       return cachedAuth;
@@ -38,14 +41,14 @@ export class DiscussionService {
       if (room.instructorId === userId) {
         isAuthorized = true;
       } else {
-        const enrollment = await this.courseClient.checkCourseEnrollment(
+        const enrollment = await this._courseClient.checkCourseEnrollment(
           courseId,
           userId,
         );
         isAuthorized = enrollment.isEnrolled;
       }
     } catch (error) {
-      this.logger.error(
+      this._logger.error(
         `Failed to verify discussion auth via gRPC for user ${userId}`,
         { error },
       );
@@ -54,9 +57,9 @@ export class DiscussionService {
     }
 
     // Cache the result for 1 hour (3600 seconds)
-    await this.redisService.set(cacheKey, isAuthorized, 3600);
+    await this._redisService.set(cacheKey, isAuthorized, 3600);
 
-    this.logger.debug(
+    this._logger.debug(
       `Cached discussion auth for user ${userId} in course ${courseId}: ${isAuthorized}`,
     );
     return isAuthorized;
