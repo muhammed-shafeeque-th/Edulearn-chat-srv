@@ -1,9 +1,14 @@
-import { IsUUID } from 'class-validator';
-import { CreateChatRequest } from 'src/infrastructure/grpc/generated/chat_service';
+import { IsUUID, IsIn } from 'class-validator';
 
-export default class CreateChatDto implements CreateChatRequest {
+export default class CreateChatDto {
   @IsUUID(undefined, { message: '`studentId` must be type UUID' })
-  userId: string;
-  @IsUUID(undefined, { message: '`enrollmentId` must be type UUID' })
-  enrollmentId: string;
+  studentId: string;
+
+  @IsUUID(undefined, { message: '`instructorId` must be type UUID' })
+  instructorId: string;
+
+  @IsIn(['student', 'instructor'], {
+    message: '`role` must be student or instructor',
+  })
+  role: 'student' | 'instructor';
 }
