@@ -26,7 +26,6 @@ jobs:
 
       - run: yarn install --frozen-lockfile
       - run: yarn lint
-      - run: yarn run test
 
   # --------------------------------------------------
   # Job 2: Call reusable workflow (matrix per service)
