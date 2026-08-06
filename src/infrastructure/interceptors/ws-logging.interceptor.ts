@@ -5,14 +5,14 @@ import {
   CallHandler,
 } from '@nestjs/common';
 import { Observable, tap, finalize } from 'rxjs';
-import { LoggingService } from '../observability/logging/logging.service';
-import { MetricsService } from '../observability/metrics/metrics.service';
+import { ILoggerService } from 'src/application/ports/logger.service';
+import { IMetricService } from 'src/application/ports/metric.service';
 
 @Injectable()
 export class WsLoggingInterceptor implements NestInterceptor {
   constructor(
-    private readonly logger: LoggingService,
-    private readonly metrics: MetricsService,
+    private readonly logger: ILoggerService,
+    private readonly metrics: IMetricService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {

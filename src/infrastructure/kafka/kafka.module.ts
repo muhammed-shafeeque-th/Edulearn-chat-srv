@@ -2,8 +2,9 @@ import { Module } from '@nestjs/common';
 import { KafkaProducerImpl } from './kafka-producer.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { KAFKA_CLIENT } from './constants';
-import { ChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
+import { IChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
 import { AppConfigService } from '../config/config.service';
+import { KafkaHealthService } from './kafka-heath.service';
 
 @Module({
   imports: [
@@ -30,7 +31,10 @@ import { AppConfigService } from '../config/config.service';
       },
     ]),
   ],
-  providers: [{ provide: ChatEventBusPort, useClass: KafkaProducerImpl }],
-  exports: [ChatEventBusPort, ClientsModule],
+  providers: [
+    { provide: IChatEventBusPort, useClass: KafkaProducerImpl },
+    KafkaHealthService,
+  ],
+  exports: [IChatEventBusPort, ClientsModule, KafkaHealthService],
 })
 export class KafkaModule {}

@@ -1,90 +1,65 @@
-import {
-  Message,
-  MessageReaction as MessageReactionDomain,
-} from 'src/domain/entities/message.entity';
-import {
-  MessageReaction,
-  MessageResponse,
-} from 'src/infrastructure/grpc/generated/chat_service';
-
-export class MessageReactionDto {
-  userId: string;
-  emoji: string;
-  id: string;
-  timestamp: Date | string;
-
-  static fromDomain(reaction: MessageReactionDomain): MessageReactionDto {
-    const dto = new MessageReactionDto();
-    dto.emoji = reaction.emoji;
-    dto.emoji = reaction.emoji;
-    dto.id = reaction.id;
-    dto.timestamp = reaction.timestamp;
-    dto.userId = reaction.userId;
-    return dto;
-  }
-
-  toGrpResponse(): MessageReaction {
-    return {
-      emoji: this.emoji,
-      id: this.id,
-      timestamp: new Date(this.timestamp).getTime(),
-      userId: this.userId,
-    };
-  }
-}
+import { Message } from 'src/domain/entities/message.entity';
+import { MessageData } from 'src/infrastructure/grpc/generated/chat_service';
 
 export class MessageDto {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  type: string;
-  timestamp: Date | string;
-  status: string;
-  fileUrl?: string;
-  fileName?: string;
-  fileSize?: number;
-  replyTo?: string;
-  reactions?: MessageReactionDto[];
-  editedAt?: Date | string;
-  readBy?: string[];
-  metadata?: Record<string, any>;
+  constructor(
+    readonly id: string,
+    readonly chatId: string,
+    readonly senderId: string,
+    readonly content: string,
+    readonly sequence: number,
+    readonly createdAt: Date,
+    readonly editedAt?: Date,
+    readonly deletedAt?: Date,
+    readonly reactions?: any[],
+    readonly readBy?: string[],
+    readonly metadata?: Record<string, any>,
+  ) {}
 
   static fromDomain(message: Message): MessageDto {
-    const dto = new MessageDto();
-    dto.id = message.id;
-    dto.content = message.content;
-    dto.conversationId = message.conversationId;
-    dto.editedAt = message.editedAt;
-    dto.fileName = message.fileName;
-    dto.fileSize = message.fileSize;
-    dto.fileUrl = message.fileUrl;
-    dto.metadata = message.metadata;
-    dto.reactions = message.reactions.map(MessageReactionDto.fromDomain);
-    dto.readBy = message.readBy;
-    dto.receiverId = message.receiverId;
-    dto.replyTo = message.replyTo;
-
-    return dto;
+    return new MessageDto(
+      message.id,
+      message.chatId,
+      message.senderId,
+      message.content,
+      message.sequence,
+      message.timestamp,
+      message.editedAt,
+      message.deletedAt,
+      message.reactions ?? [],
+      message.readBy ?? [],
+      message.metadata ?? {},
+    );
   }
 
-  public toGrpcResponse(): MessageResponse {
+  toGrpcResponse(): MessageData {
     return {
-      content: this.content,
-      conversationId: this.conversationId,
-      createdAt: new Date(this.timestamp).getTime(),
       id: this.id,
-      reactions: this.reactions.map((reaction) => reaction.toGrpResponse()),
+      chatId: this.chatId,
       senderId: this.senderId,
-      status: this.status,
-      updatedAt: new Date(this.editedAt).getTime(),
-      fileName: this.fileName,
-      fileSize: this.fileSize.toFixed(),
-      fileUrl: this.fileUrl,
-      receiverId: this.receiverId,
-      replayTo: this.replyTo,
-      type: this.type,
+      content: this.content,
+      sequence: this.sequence,
+      createdAt: this.createdAt.toISOString(),
+      updatedAt: this.editedAt
+        ? this.editedAt.toISOString()
+        : this.createdAt.toISOString(),
+      reactions: this.reactions ?? [],
+    };
+  }
+  toWsPayload() {
+    return {
+      id: this.id,
+      chatId: this.chatId,
+      senderId: this.senderId,
+      content: this.content,
+      sequence: this.sequence,
+      createdAt: this.createdAt.getTime(),
+      updatedAt: this.editedAt
+        ? this.editedAt.getTime()
+        : this.createdAt.getTime(),
+      reactions: this.reactions ?? [],
+      readBy: this.readBy,
+      editedAt: this.editedAt,
     };
   }
 }

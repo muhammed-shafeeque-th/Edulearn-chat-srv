@@ -1,36 +1,50 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { WsException } from '@nestjs/websockets';
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
+import { ILoggerService } from 'src/application/ports/logger.service';
 import { AppConfigService } from 'src/infrastructure/config/config.service';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly logger: LoggingService,
+    private readonly logger: ILoggerService,
     private readonly configService: AppConfigService,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
+    const client = context.switchToWs().getClient();
+    const token = this.extractTokenFromHandshake(client);
+
+    if (!token) {
+      throw new WsException('Access token not found');
+    }
     try {
-      const client = context.switchToWs().getClient();
-      const token = this.extractTokenFromHandshake(client);
-
-      if (!token) {
-        throw new WsException('Access token not found');
-      }
-
       const payload = this.jwtService.verify(token, {
         secret: this.configService.jwtSecret,
       });
 
-      this.logger.info('token payload ' + JSON.stringify(payload, null, 2));
+      // EXPIRY CHECK (HERE)
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        this.logger.warn('WS token expired', {
+          userId: payload.sub,
+        });
 
-      client.user = payload;
+        client.disconnect(true);
+        throw new WsException('Token expired');
+      }
+
+      // Attach user to socket
+      client.user = {
+        userId: payload.sub,
+        email: payload.email,
+        username: payload.username,
+        role: payload.role,
+      };
+
       return true;
-    } catch (error) {
-      this.logger.error('WebSocket authentication failed', error);
+    } catch (err) {
+      this.logger.warn('WS JWT validation failed', { err });
       throw new WsException('Unauthorized');
     }
   }

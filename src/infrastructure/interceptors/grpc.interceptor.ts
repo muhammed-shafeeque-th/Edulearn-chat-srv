@@ -4,11 +4,11 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { LoggingService } from '../observability/logging/logging.service';
-import { MetricsService } from '../observability/metrics/metrics.service';
 import { finalize, Observable, tap } from 'rxjs';
 import { Metadata } from '@grpc/grpc-js';
-import { context, propagation, trace } from '@opentelemetry/api';
+import { context, propagation } from '@opentelemetry/api';
+import { ILoggerService } from 'src/application/ports/logger.service';
+import { IMetricService } from 'src/application/ports/metric.service';
 
 /**
  * Interceptor providing:
@@ -18,8 +18,8 @@ import { context, propagation, trace } from '@opentelemetry/api';
 @Injectable()
 export class GrpcInterceptor implements NestInterceptor {
   constructor(
-    private readonly logger: LoggingService,
-    private readonly metrics: MetricsService,
+    private readonly logger: ILoggerService,
+    private readonly metrics: IMetricService,
   ) {}
 
   intercept(

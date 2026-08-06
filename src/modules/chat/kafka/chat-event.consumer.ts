@@ -12,13 +12,13 @@ import {
   DiscussionMessageSentKafkaEvent,
 } from 'src/infrastructure/kafka/chat-kafka.events';
 import { CHAT_TOPICS } from 'src/infrastructure/kafka/chat-topics';
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
+import { ILoggerService } from 'src/application/ports/logger.service';
 
 @Controller()
 export class ChatEventsConsumer {
   constructor(
     private readonly ws: ChatGateway,
-    private readonly logger: LoggingService,
+    private readonly logger: ILoggerService,
   ) {}
 
   @EventPattern(CHAT_TOPICS.MESSAGE_SENT)

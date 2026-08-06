@@ -19,14 +19,14 @@ import {
 import { Server, Socket } from 'socket.io';
 
 import { WsJwtGuard } from '../../auth/guards/ws-jwt.guard';
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
-import { PresenceService } from 'src/infrastructure/redis/presence.repository';
+import { PresenceService } from 'src/infrastructure/redis/presence.service';
 import { JoinChatPayload, TypingEmitPayload } from './types';
 import { WsLoggingInterceptor } from 'src/infrastructure/interceptors/ws-logging.interceptor';
 import { JwtService } from '@nestjs/jwt';
 import { AppConfigService } from 'src/infrastructure/config/config.service';
 import { ChatService } from '../../../application/services/chat.service';
 import { DiscussionService } from '../../../application/services/discussion.service';
+import { ILoggerService } from 'src/application/ports/logger.service';
 
 export interface WsAuthUser {
   userId: string;
@@ -59,7 +59,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly logger: LoggingService,
+    private readonly logger: ILoggerService,
     private readonly configService: AppConfigService,
     private readonly presenceService: PresenceService,
     private readonly chatService: ChatService,

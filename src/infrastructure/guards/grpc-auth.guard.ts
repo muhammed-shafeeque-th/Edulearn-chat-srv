@@ -1,11 +1,11 @@
 import { CanActivate, ExecutionContext } from '@nestjs/common';
-import { LoggingService } from '../observability/logging/logging.service';
 import { Observable } from 'rxjs';
 import { Metadata, status } from '@grpc/grpc-js';
 import { RpcException } from '@nestjs/microservices';
+import { ILoggerService } from 'src/application/ports/logger.service';
 
 export class GrpcAuthGuard implements CanActivate {
-  constructor(private readonly logger: LoggingService) {}
+  constructor(private readonly logger: ILoggerService) {}
 
   canActivate(
     context: ExecutionContext,

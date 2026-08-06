@@ -69,4 +69,4 @@ USER edulearn_user
 EXPOSE 50053
 
 # Direct start (no yarn overhead, better signal handling)
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/main.js"]

@@ -20,8 +20,23 @@ export class AppConfigService {
     return this.configService.get<string>('SERVICE_VERSION', '1.0.0');
   }
 
-  get apiPort(): number {
-    return this.configService.get<number>('API_PORT', 3003);
+  // Client Grpc service ports
+  get courseGrpcUrl(): string {
+    return this.configService.get<string>(
+      'COURSE_SERVICE_GRPC',
+      'course_svc:50053',
+    );
+  }
+
+  get userGrpcUrl(): string {
+    return this.configService.get<string>(
+      'USER_SERVICE_GRPC',
+      'user_svc:50052',
+    );
+  }
+
+  get httpPort(): number {
+    return this.configService.get<number>('HTTP_PORT', 3000);
   }
 
   get grpcPort(): number {
@@ -90,22 +105,32 @@ export class AppConfigService {
     return this.configService.get<string>('REDIS_KEY_PREFIX', 'edulearn:user:');
   }
 
+  get redisDb(): number {
+    return this.configService.get<number>('REDIS_DB', 2);
+  }
+  get redisHost(): string {
+    return this.configService.get<string>('REDIS_HOST', 'localhost');
+  }
+  get redisPort(): number {
+    return this.configService.get<number>('REDIS_PORT', 6379);
+  }
+
   // Kafka config
 
   get kafkaBrokers(): string[] {
     return this.configService
-      .get<string>('KAFKA_BROKER', 'localhost:9092')
+      .get<string>('KAFKA_BROKERS', 'localhost:9092')
       .split(',');
   }
 
   get kafkaClientId(): string {
-    return this.configService.get<string>('KAFKA_CLIENT_ID', 'user-service');
+    return this.configService.get<string>('KAFKA_CLIENT_ID', 'chat-service');
   }
 
   get kafkaConsumerGroup(): string {
     return this.configService.get<string>(
       'KAFKA_CONSUMER_GROUP',
-      'user-service-group',
+      'chat-service-group',
     );
   }
 
@@ -131,10 +156,6 @@ export class AppConfigService {
 
   // Observability config
 
-  get jaegerEndpoint(): string {
-    return this.configService.get<string>('JAEGER_ENDPOINT', 'development');
-  }
-
   get tracingSamplingRatio(): number {
     return this.configService.get<number>('TRACING_SAMPLING_RATIO', 0.1);
   }
@@ -143,19 +164,7 @@ export class AppConfigService {
     return this.configService.get<string>('LOG_LEVEL', 'info');
   }
 
-  get jaegerHost(): string {
-    return this.configService.get<string>('JAEGER_HOST', 'localhost');
-  }
-
-  get jaegerPort(): number {
-    return this.configService.get<number>('JAEGER_PORT', 6831);
-  }
-
-  get lokiUrl(): string {
-    return this.configService.get<string>('LOKI_URL', 'http://localhost:3100');
-  }
-
-  get prometheusPort(): number {
-    return this.configService.get<number>('PROMETHEUS_PORT', 9091);
+  get collectorUrl(): string {
+    return this.configService.get<string>('OTLP_ENDPOINT', 'info');
   }
 }

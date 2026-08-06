@@ -8,9 +8,7 @@ import { DiscussionRoomDocument } from '../schemas/discussion-room.schema';
 import { ILoggerService } from 'src/application/ports/logger.service';
 
 @Injectable()
-export class MongoDbDiscussionRoomRepository
-  implements IDiscussionRoomRepository
-{
+export class MongoDbDiscussionRoomRepository implements IDiscussionRoomRepository {
   constructor(
     private readonly logger: ILoggerService,
     @InjectModel(DiscussionRoomDocument.name)

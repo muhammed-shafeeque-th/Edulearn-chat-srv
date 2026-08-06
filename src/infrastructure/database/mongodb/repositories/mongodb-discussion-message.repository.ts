@@ -8,9 +8,7 @@ import { DiscussionMessageDocument } from '../schemas/discussion-message.schema'
 import { DiscussionCounterDocument } from '../schemas/discussion-counter.schema';
 
 @Injectable()
-export class MongoDbDiscussionMessageRepository
-  implements IDiscussionMessageRepository
-{
+export class MongoDbDiscussionMessageRepository implements IDiscussionMessageRepository {
   private readonly logger = new Logger(MongoDbDiscussionMessageRepository.name);
 
   constructor(

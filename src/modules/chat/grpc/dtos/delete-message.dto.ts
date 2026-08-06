@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsUUID } from 'class-validator';
 import { DeleteMessageRequest } from 'src/infrastructure/grpc/generated/chat_service';
 
 export default class DeleteMessageDto implements DeleteMessageRequest {

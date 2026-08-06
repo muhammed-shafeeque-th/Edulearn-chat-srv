@@ -12,7 +12,7 @@ import { WsJwtGuard } from './guards/ws-jwt.guard';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('jwt.secret'),
         signOptions: {
-          expiresIn: configService.get<string>('jwt.expiresIn'),
+          expiresIn: configService.get<any>('jwt.expiresIn'),
         },
       }),
       inject: [ConfigService],

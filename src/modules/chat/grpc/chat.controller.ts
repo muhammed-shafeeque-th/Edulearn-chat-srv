@@ -1,13 +1,12 @@
 import { Controller, UseFilters, UseInterceptors } from '@nestjs/common';
 
-import { SendMessageUseCase } from '../../../application/use-cases/chat/send-message.use-case';
-import { GetChatMessagesUseCase } from '../../../application/use-cases/chat/get-chat-messages.use-case';
-import { CreateChatUseCase } from '../../../application/use-cases/chat/create-chat.use-case';
-import { EditMessageUseCase } from '../../../application/use-cases/chat/edit-message.use-case';
-import { DeleteMessageUseCase } from '../../../application/use-cases/chat/delete-message.use-case';
-import { ReactMessageUseCase } from '../../../application/use-cases/chat/add-reaction.use-case';
-import { GrpcExceptionFilter } from 'src/infrastructure/filters/grpc-exeption.filter';
-import { LoggingService } from 'src/infrastructure/observability/logging/logging.service';
+import { ISendMessageUseCase } from 'src/application/use-cases/chat/interfaces/send-message.interface';
+import { IGetChatMessagesUseCase } from 'src/application/use-cases/chat/interfaces/get-chat-messages.interface';
+import { ICreateChatUseCase } from 'src/application/use-cases/chat/interfaces/create-chat.interface';
+import { IEditMessageUseCase } from 'src/application/use-cases/chat/interfaces/edit-message.interface';
+import { IDeleteMessageUseCase } from 'src/application/use-cases/chat/interfaces/delete-message.interface';
+import { IReactMessageUseCase } from 'src/application/use-cases/chat/interfaces/add-reaction.interface';
+import { GrpcExceptionFilter } from 'src/infrastructure/filters/grpc-exception.filter';
 import { GrpcMethod } from '@nestjs/microservices';
 import {
   AddReactionRequest,
@@ -34,54 +33,55 @@ import {
   CreateDiscussionRoomRequest,
   GetDiscussionMessagesRequest,
 } from 'src/infrastructure/grpc/generated/chat_service';
-import { GetChatUseCase } from 'src/application/use-cases/chat/get-chat.use-case';
-import { DeleteChatUseCase } from 'src/application/use-cases/chat/delete-chat.use-case';
-import { UnPinChatUseCase } from 'src/application/use-cases/chat/unpin-chat.use-case';
-import { PinChatUseCase } from 'src/application/use-cases/chat/pin-chat.use-case';
-import { RemoveReactionUseCase } from 'src/application/use-cases/chat/remove-reaction.use-case';
-import { ListStudentChatsUseCase } from 'src/application/use-cases/chat/list-student-chats.use-case';
-import { MarkMessagesAsReadUseCase } from 'src/application/use-cases/chat/mark-messages-as-read.use-case';
+import { IGetChatUseCase } from 'src/application/use-cases/chat/interfaces/get-chat.interface';
+import { IDeleteChatUseCase } from 'src/application/use-cases/chat/interfaces/delete-chat.interface';
+import { IUnPinChatUseCase } from 'src/application/use-cases/chat/interfaces/unpin-chat.use-case';
+import { IPinChatUseCase } from 'src/application/use-cases/chat/interfaces/pin-chat.interface';
+import { IRemoveReactionUseCase } from 'src/application/use-cases/chat/interfaces/remove-reaction.interface';
+import { IListStudentChatsUseCase } from 'src/application/use-cases/chat/interfaces/list-student-chats.interface';
+import { IMarkMessagesAsReadUseCase } from 'src/application/use-cases/chat/interfaces/mark-messages-as-read.interface';
 import { GrpcInterceptor } from 'src/infrastructure/interceptors/grpc.interceptor';
-import { ListInstructorChatsUseCase } from 'src/application/use-cases/chat/list-instructor-chats.use-case';
-import { GetOnlineUsersUseCase } from 'src/application/use-cases/chat/get-online-users.use-case';
+import { IListInstructorChatsUseCase } from 'src/application/use-cases/chat/interfaces/list-instructor-chats.interface';
+import { IGetOnlineUsersUseCase } from 'src/application/use-cases/chat/interfaces/get-online-users.interface';
 
 // Discussion use cases
-import { CreateOrGetDiscussionRoomUseCase } from 'src/application/use-cases/discussion/create-or-get-discussion-room.use-case';
-import { SendDiscussionMessageUseCase } from 'src/application/use-cases/discussion/send-discussion-message.use-case';
-import { GetDiscussionMessagesUseCase } from 'src/application/use-cases/discussion/get-discussion-messages.use-case';
+import { ICreateOrGetDiscussionRoomUseCase } from 'src/application/use-cases/discussion/interfaces/create-or-get-discussion-room.interface';
+import { ISendDiscussionMessageUseCase } from 'src/application/use-cases/discussion/interfaces/send-discussion-message.interface';
+import { IGetDiscussionMessagesUseCase } from 'src/application/use-cases/discussion/interfaces/get-discussion-messages.interface';
+import { ILoggerService } from 'src/application/ports/logger.service';
 
 @Controller()
 @UseFilters(GrpcExceptionFilter)
 @UseInterceptors(GrpcInterceptor)
 export class ChatGrpcController {
   constructor(
-    private readonly logger: LoggingService,
+    private readonly logger: ILoggerService,
 
-    private readonly createChatUseCase: CreateChatUseCase,
-    private readonly getChatUseCase: GetChatUseCase,
-    private readonly deleteChatUseCase: DeleteChatUseCase,
-    private readonly listInstructorChatsUseCase: ListInstructorChatsUseCase,
-    private readonly listStudentChatsUseCase: ListStudentChatsUseCase,
+    private readonly createChatUseCase: ICreateChatUseCase,
+    private readonly getChatUseCase: IGetChatUseCase,
+    private readonly deleteChatUseCase: IDeleteChatUseCase,
+    private readonly listInstructorChatsUseCase: IListInstructorChatsUseCase,
+    private readonly listStudentChatsUseCase: IListStudentChatsUseCase,
 
-    private readonly sendMessageUseCase: SendMessageUseCase,
-    private readonly getChatMessagesUseCase: GetChatMessagesUseCase,
-    private readonly markMessagesReadUseCase: MarkMessagesAsReadUseCase,
+    private readonly sendMessageUseCase: ISendMessageUseCase,
+    private readonly getChatMessagesUseCase: IGetChatMessagesUseCase,
+    private readonly markMessagesReadUseCase: IMarkMessagesAsReadUseCase,
 
-    private readonly editMessageUseCase: EditMessageUseCase,
-    private readonly deleteMessageUseCase: DeleteMessageUseCase,
+    private readonly editMessageUseCase: IEditMessageUseCase,
+    private readonly deleteMessageUseCase: IDeleteMessageUseCase,
 
-    private readonly reactMessageUseCase: ReactMessageUseCase,
-    private readonly removeReactionUseCase: RemoveReactionUseCase,
+    private readonly reactMessageUseCase: IReactMessageUseCase,
+    private readonly removeReactionUseCase: IRemoveReactionUseCase,
 
-    private readonly pinChatUseCase: PinChatUseCase,
-    private readonly unPinChatUseCase: UnPinChatUseCase,
+    private readonly pinChatUseCase: IPinChatUseCase,
+    private readonly unPinChatUseCase: IUnPinChatUseCase,
 
-    private readonly getOnlineUsersUseCase: GetOnlineUsersUseCase,
+    private readonly getOnlineUsersUseCase: IGetOnlineUsersUseCase,
 
     // Discussion use cases
-    private readonly createOrGetDiscussionRoomUseCase: CreateOrGetDiscussionRoomUseCase,
-    private readonly sendDiscussionMessageUseCase: SendDiscussionMessageUseCase,
-    private readonly getDiscussionMessagesUseCase: GetDiscussionMessagesUseCase,
+    private readonly createOrGetDiscussionRoomUseCase: ICreateOrGetDiscussionRoomUseCase,
+    private readonly sendDiscussionMessageUseCase: ISendDiscussionMessageUseCase,
+    private readonly getDiscussionMessagesUseCase: IGetDiscussionMessagesUseCase,
     // private readonly archiveChatUseCase: ArchiveChatUseCase,
     // private readonly unArchiveChatUseCase: UnArchiveChatUseCase,
     // private readonly muteChatUseCase: MuteChatUseCase,
