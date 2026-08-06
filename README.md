@@ -1,99 +1,609 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Chat Service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+The **Chat Service** is the real-time communication service of the Edulearn platform. It provides persistent messaging, conversation management, real-time delivery, and event-driven communication between students, instructors, and platform participants.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The service is built with **NestJS**, **TypeScript**, **WebSockets**, **gRPC**, and **Clean Architecture**, and depends on **@edulearn/nest** for shared platform infrastructure including logging, metrics, distributed tracing, Redis, Kafka, health checks, and observability utilities.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Overview
 
-## Project setup
+The Chat Service is the authoritative owner of messaging and conversation data within the platform. It manages conversations, message persistence, read receipts, presence events, and real-time delivery while coordinating with other services through **WebSockets**, **gRPC**, and **Kafka**.
 
-```bash
-$ yarn install
+### Responsibilities
+
+* Real-time messaging
+* Conversation management
+* Message persistence
+* Read receipts
+* Typing indicators
+* Online presence
+* Message delivery acknowledgements
+* Event-driven synchronization
+* WebSocket connection management
+
+### Out of Scope
+
+* Authentication and authorization (Auth Service)
+* User profile management (User Service)
+* Course management (Course Service)
+* Payment processing (Payment Service)
+* Notification delivery (Notification Service)
+
+---
+
+# Architecture
+
+This service follows **Clean Architecture (Hexagonal Architecture)** with **SOLID principles**, enabling framework-independent business logic, scalable real-time communication, and reliable message processing.
+
+## Layered Architecture
+
+```text
+          WebSocket Gateway / gRPC Controllers
+                        │
+                Application Layer
+      (Use Cases / DTOs / Events / Messaging)
+                        │
+                  Domain Layer
+(Conversations / Messages / Repository Interfaces)
+                        │
+              Infrastructure Layer
+ (MongoDB / Redis / Kafka / WebSockets / Observability)
 ```
 
-## Compile and run the project
+### Layers
 
-```bash
-# development
-$ yarn run start
+#### Presentation Layer
 
-# watch mode
-$ yarn run start:dev
+* WebSocket gateways
+* gRPC controllers
+* Connection lifecycle
+* Authentication middleware
+* Transport-specific concerns
 
-# production mode
-$ yarn run start:prod
+#### Application Layer
+
+* Messaging workflows
+* Conversation orchestration
+* Presence management
+* Typing events
+* Event handlers
+* Delivery coordination
+
+#### Domain Layer
+
+* Conversation aggregate
+* Message entity
+* Participant entity
+* Repository interfaces
+* Domain services
+* Messaging rules
+
+#### Infrastructure Layer
+
+* MongoDB persistence
+* Redis pub/sub
+* Kafka integration
+* WebSocket infrastructure
+* Logging, metrics, and tracing
+
+---
+
+# Technology Stack
+
+| Category       | Technology                                          |
+| -------------- | --------------------------------------------------- |
+| Language       | TypeScript 5.x                                      |
+| Runtime        | Node.js                                             |
+| Framework      | NestJS 11                                           |
+| Architecture   | Clean Architecture                                  |
+| Transport      | gRPC                                                |
+| Realtime       | WebSocket                                           |
+| Database       | MongoDB                                             |
+| ODM            | Mongoose                                            |
+| Cache / PubSub | Redis                                               |
+| Messaging      | Kafka                                               |
+| Observability  | @edulearn/nest (Winston, Prometheus, OpenTelemetry) |
+| Deployment     | Docker, Kubernetes, Helm                            |
+
+---
+
+# Core Domain
+
+The Chat Service owns the communication domain.
+
+## Conversation
+
+* Conversation lifecycle
+* Participants
+* Conversation metadata
+* Conversation state
+
+## Message
+
+* Message content
+* Sender
+* Attachments
+* Delivery status
+* Timestamps
+
+## Participant
+
+* User membership
+* Conversation permissions
+* Read state
+* Presence information
+
+## Presence
+
+* Online / offline state
+* Last seen
+* Typing indicators
+* Connection metadata
+
+---
+
+# Real-Time Messaging Flow
+
+## Message Delivery
+
+```text
+Client A
+   │
+   ▼
+WebSocket Gateway
+   │
+   ▼
+Validate & Persist Message
+   │
+   ▼
+MongoDB
+   │
+   ▼
+Redis Pub/Sub
+   │
+   ▼
+Connected Recipients
+   │
+   ▼
+Client B
 ```
 
-## Run tests
+## Presence Updates
 
-```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+```text
+Client Connect
+      │
+      ▼
+Authenticate Socket
+      │
+      ▼
+Update Presence
+      │
+      ▼
+Broadcast Presence Event
+      │
+      ▼
+Connected Participants
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+# Project Structure
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ yarn install -g mau
-$ mau deploy
+```text
+src/
+├── application/
+│   ├── dtos/
+│   ├── use-cases/
+│   ├── events/
+│   └── services/
+├── domain/
+│   ├── entities/
+│   ├── repositories/
+│   ├── services/
+│   └── exceptions/
+├── infrastructure/
+│   ├── database/
+│   ├── websocket/
+│   ├── grpc/
+│   ├── kafka/
+│   ├── redis/
+│   ├── observability/
+│   └── config/
+├── presentation/
+│   ├── websocket/
+│   └── grpc/
+└── shared/
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+# Communication
 
-Check out a few resources that may come in handy when working with NestJS:
+## WebSocket API
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+The Chat Service provides real-time communication through WebSocket gateways.
 
-## Support
+### Client Events
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+* `conversation.join`
+* `conversation.leave`
+* `message.send`
+* `message.read`
+* `typing.start`
+* `typing.stop`
+* `presence.subscribe`
 
-## Stay in touch
+### Server Events
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+* `message.created`
+* `message.updated`
+* `message.deleted`
+* `message.read`
+* `typing.started`
+* `typing.stopped`
+* `presence.updated`
+* `conversation.updated`
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## gRPC APIs
+
+The Chat Service exposes internal gRPC APIs consumed by:
+
+* API Gateway
+* User Service
+* Notification Service
+* Course Service
+
+Example operations:
+
+* CreateConversation
+* GetConversation
+* GetConversationsByUser
+* SendMessage
+* GetMessages
+* MarkMessageRead
+* GetUnreadCount
+
+---
+
+## Kafka Integration
+
+The Chat Service participates in the platform event architecture.
+
+### Published Events
+
+| Topic                        | Purpose              |
+| ---------------------------- | -------------------- |
+| chat.message.created.v1      | New message          |
+| chat.message.read.v1         | Message read         |
+| chat.conversation.created.v1 | Conversation created |
+| chat.presence.updated.v1     | Presence updated     |
+
+### Consumed Events
+
+| Topic                        | Purpose                   |
+| ---------------------------- | ------------------------- |
+| user.updated.v1              | Synchronize user metadata |
+| user.blocked.v1              | Restrict messaging        |
+| user.unblocked.v1            | Restore messaging         |
+| notification.request.chat.v1 | Trigger notifications     |
+
+This event-driven model enables asynchronous notifications, analytics, and cross-service synchronization.
+
+---
+
+# Data Ownership
+
+The Chat Service is the single source of truth for messaging-related data.
+
+| Entity        | Owner        |
+| ------------- | ------------ |
+| conversations | Chat Service |
+| messages      | Chat Service |
+| participants  | Chat Service |
+| presence      | Chat Service |
+
+Other services access this data through gRPC APIs or Kafka events rather than direct database access.
+
+---
+
+# Dependency on @edulearn/nest
+
+The Chat Service relies on **@edulearn/nest** for shared platform infrastructure.
+
+## Logging
+
+* Winston structured logging
+* JSON log output
+* Correlation IDs
+* Trace-aware logging
+* WebSocket connection diagnostics
+
+## Metrics
+
+Prometheus metrics include:
+
+* Active WebSocket connections
+* Messages sent
+* Messages delivered
+* Messages read
+* Conversation creation rate
+* Presence updates
+* gRPC request latency
+* Kafka consumer lag
+
+Exposed at:
+
+```text
+/metrics
+```
+
+## Distributed Tracing
+
+OpenTelemetry instrumentation provides end-to-end tracing across messaging workflows.
+
+Trace flow:
+
+```text
+Client
+   │
+   ▼
+API Gateway
+   │
+   ▼
+Chat Service
+   │
+   ▼
+MongoDB / Redis / Kafka
+```
+
+Traces are exported to **OTEL Collector → Tempo → Grafana**.
+
+## Shared Infrastructure
+
+Provided by **@edulearn/nest**:
+
+* Logger
+* Metrics registry
+* Tracer
+* Redis client
+* Health checks
+* Configuration utilities
+* Common error handling
+
+---
+
+# Redis Usage
+
+Redis is used for:
+
+* WebSocket pub/sub
+* Presence state
+* Typing indicators
+* Connection tracking
+* Distributed gateway coordination
+* Horizontal scaling support
+
+Redis enables real-time communication across multiple Chat Service instances in a Kubernetes environment.
+
+---
+
+# Database
+
+MongoDB is the primary persistent datastore.
+
+Mongoose manages:
+
+* Conversation documents
+* Message documents
+* Indexes
+* Aggregation queries
+* Repository implementations
+
+Example collections:
+
+* conversations
+* messages
+* participants
+* presence
+
+---
+
+# Local Development
+
+## Prerequisites
+
+* Node.js 22+
+* Yarn
+* MongoDB
+* Redis
+* Kafka
+
+## Install
+
+```bash
+yarn install
+```
+
+## Start Development
+
+```bash
+yarn start:dev
+```
+
+## Build
+
+```bash
+yarn build
+```
+
+## Start Production
+
+```bash
+yarn start:prod
+```
+
+---
+
+# Environment Variables
+
+| Variable                    | Description                     |
+| --------------------------- | ------------------------------- |
+| PORT                        | WebSocket / gRPC port           |
+| MONGODB_URI                 | MongoDB connection string       |
+| REDIS_URL                   | Redis connection string         |
+| KAFKA_BROKERS               | Kafka broker list               |
+| JWT_SECRET                  | WebSocket authentication secret |
+| OTEL_EXPORTER_OTLP_ENDPOINT | OTLP collector endpoint         |
+| LOG_LEVEL                   | Logging level                   |
+
+See `env.example` for the complete configuration.
+
+---
+
+# Docker
+
+The service uses a **multi-stage Docker build** optimized for production.
+
+Optimizations include:
+
+* Multi-stage compilation
+* Dependency pruning
+* Layer caching
+* Minimal runtime image
+* Non-root execution
+* Reduced attack surface
+
+---
+
+# Kubernetes Deployment
+
+Deployment is managed through the **Edulearn umbrella Helm chart**.
+
+The service is deployed with:
+
+* ClusterIP service
+* WebSocket support
+* gRPC exposure
+* Liveness probes
+* Readiness probes
+* Resource requests and limits
+* Horizontal Pod Autoscaler support
+* Prometheus ServiceMonitor
+
+For horizontal scaling, WebSocket instances coordinate through **Redis Pub/Sub**.
+
+---
+
+# CI/CD
+
+This service participates in the platform GitOps deployment pipeline.
+
+```text
+Git Push
+    │
+    ▼
+GitHub Actions
+    ├── Test
+    ├── Build
+    ├── Lint
+    ├── Trivy Scan
+    └── Push to GHCR
+             │
+             ▼
+ArgoCD Image Updater
+             │
+             ▼
+ArgoCD
+             │
+             ▼
+Amazon EKS
+```
+
+---
+
+# Performance Optimizations
+
+Implemented optimizations include:
+
+* Redis Pub/Sub for horizontal scaling
+* MongoDB indexing
+* Efficient aggregation queries
+* Connection pooling
+* WebSocket connection reuse
+* Kafka asynchronous processing
+* Optimized Docker image size
+
+---
+
+# Security
+
+The service follows production-oriented security practices.
+
+## Messaging Security
+
+* JWT-based WebSocket authentication
+* Conversation membership validation
+* Message authorization
+* Rate limiting
+* Input validation
+* Attachment validation
+
+## Secrets Management
+
+Production deployments retrieve secrets from:
+
+* AWS Secrets Manager
+* External Secrets Operator
+
+## Container Security
+
+* Runs as non-root user
+* No shell access
+* Minimal Linux capabilities
+* Read-only filesystem where applicable
+
+---
+
+# Testing
+
+```bash
+# Unit tests
+yarn test
+
+# Integration tests
+yarn test:integration
+
+# End-to-end tests
+yarn test:e2e
+
+# Coverage
+yarn test:cov
+```
+
+---
+
+
+# Related Repositories
+
+| Repository                    | Description                                                   |
+| ----------------------------- | ------------------------------------------------------------- |
+| [edulearn-platform](https://github.com/muhammed-shafeeque-th/edulearn-platform)             | Platform orchestration repository                             |
+| [edulearn-api-gateway](https://github.com/muhammed-shafeeque-th/edulearn-api-gateawy)          | API Gateway                                                   |
+| [edulearn-user-service](https://github.com/muhammed-shafeeque-th/edulearn-user-srv)         | User profile service                                          |
+| [edulearn-course-service](https://github.com/muhammed-shafeeque-th/edulearn-course-srv)       | Course management service                                     |
+| [edulearn-payment-service](https://github.com/muhammed-shafeeque-th/edulearn-payment-srv)      | Payment processing service                                    |
+| [edulearn-order-service](https://github.com/muhammed-shafeeque-th/edulearn-order-srv)        | Order management service                                      |
+| [edulearn-notification-service](https://github.com/muhammed-shafeeque-th/edulearn-notification-srv) | Notification service                                          |
+| [edulearn-auth-service](https://github.com/muhammed-shafeeque-th/edulearn-auth-srv)         | Authentication service                                        |
+| [@edulearn/core](https://github.com/muhammed-shafeeque-th/edulearn-core)                | Shared logging, metrics, tracing, Redis, Kafka, health checks |
+| [@edulearn/nest](https://github.com/muhammed-shafeeque-th/edulearn-nest)                | Shared NestJS infrastructure package                          |
+
+---
+
+# License
+
+This project is part of the **Edulearn Platform** and is licensed under the MIT License.
