@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
-import { ChatDto } from 'src/application/dtos/chat.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import UnPinChatDto from 'src/modules/chat/grpc/dtos/unpin-chat.dto';
 import { IChatUserStateRepository } from 'src/domain/repositories/chat-user.repository';
@@ -10,6 +9,8 @@ import {
   NotAuthorizedException,
 } from 'src/shared/exceptions/infra.exceptions';
 import { IUnPinChatUseCase } from '../interfaces/unpin-chat.use-case';
+import { Chat } from '@/domain/entities/chat.entity';
+import { ChatUserState } from '@/domain/entities/chat-user-state.entity';
 
 @Injectable()
 export class UnPinChatUseCase implements IUnPinChatUseCase {
@@ -24,7 +25,9 @@ export class UnPinChatUseCase implements IUnPinChatUseCase {
    * @param dto Data containing chatId and userId
    * @returns The updated Chat entity as DTO
    */
-  async execute(dto: UnPinChatDto): Promise<ChatDto> {
+  async execute(
+    dto: UnPinChatDto,
+  ): Promise<{ chat: Chat; state: ChatUserState }> {
     const { chatId, userId } = dto;
 
     // Input validation
@@ -59,6 +62,6 @@ export class UnPinChatUseCase implements IUnPinChatUseCase {
 
     this._logger.log(`Unpinned chat ${chatId} for user ${userId}`);
 
-    return ChatDto.fromDomain(chat, state);
+    return { chat, state };
   }
 }

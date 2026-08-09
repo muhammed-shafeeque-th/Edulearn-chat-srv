@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
-import { ChatDto } from 'src/application/dtos/chat.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import PinChatDto from 'src/modules/chat/grpc/dtos/pin-chat.dto';
 import { IChatUserStateRepository } from 'src/domain/repositories/chat-user.repository';
@@ -10,6 +9,8 @@ import {
   NotAuthorizedException,
 } from 'src/shared/exceptions/infra.exceptions';
 import { IPinChatUseCase } from '../interfaces/pin-chat.interface';
+import { ChatUserState } from '@/domain/entities/chat-user-state.entity';
+import { Chat } from '@/domain/entities/chat.entity';
 
 @Injectable()
 export class PinChatUseCase implements IPinChatUseCase {
@@ -24,7 +25,9 @@ export class PinChatUseCase implements IPinChatUseCase {
    * @param dto Data containing chatId and userId
    * @returns The updated Chat entity as DTO
    */
-  async execute(dto: PinChatDto): Promise<ChatDto> {
+  async execute(
+    dto: PinChatDto,
+  ): Promise<{ chat: Chat; state: ChatUserState }> {
     const { chatId, userId } = dto;
 
     // Validate input
@@ -56,6 +59,6 @@ export class PinChatUseCase implements IPinChatUseCase {
     await this.stateRepository.save(state);
 
     this._logger.log(`Pinned chat ${chatId} for user ${userId}`);
-    return ChatDto.fromDomain(chat, state);
+    return { chat, state };
   }
 }

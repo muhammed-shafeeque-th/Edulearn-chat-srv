@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
 import ListStudentChatsDto from 'src/modules/chat/grpc/dtos/list-student-chats.dto';
-import { ChatDto } from 'src/application/dtos/chat.dto';
 import { IChatUserStateRepository } from 'src/domain/repositories/chat-user.repository';
 import { BadRequestException } from 'src/shared/exceptions/infra.exceptions';
 import { IListStudentChatsUseCase } from '../interfaces/list-student-chats.interface';
+import { Chat } from '@/domain/entities/chat.entity';
+import { ChatUserState } from '@/domain/entities/chat-user-state.entity';
 
 @Injectable()
 export class ListStudentChatsUseCase implements IListStudentChatsUseCase {
@@ -15,7 +16,7 @@ export class ListStudentChatsUseCase implements IListStudentChatsUseCase {
 
   async execute(
     query: ListStudentChatsDto,
-  ): Promise<{ chats: ChatDto[]; total: number }> {
+  ): Promise<{ chats: { chat: Chat; state: ChatUserState }[]; total: number }> {
     const { studentId, pagination } = query;
 
     if (!studentId) {
@@ -34,24 +35,24 @@ export class ListStudentChatsUseCase implements IListStudentChatsUseCase {
     const statesMap = await this._stateRepo.findManyByUser(studentId, chatIds);
 
     // ensure state always exists
-    const dtos = await Promise.all(
+    const res = await Promise.all(
       chats.map(async (chat) => {
         const state =
           statesMap.get(chat.id) ??
           (await this._stateRepo.getOrCreate(chat.id, studentId));
-        return ChatDto.fromDomain(chat, state);
+        return { chat, state };
       }),
     );
 
     // apply archived filter
-    const visible = dtos.filter((c) => !c.archived);
+    const visible = res.filter((c) => !c.state.archived);
 
     // pinned first
     visible.sort((a, b) => {
-      const ap = a.pinned ? 1 : 0;
-      const bp = b.pinned ? 1 : 0;
+      const ap = a.state.pinned ? 1 : 0;
+      const bp = b.state.pinned ? 1 : 0;
       if (ap !== bp) return bp - ap;
-      return b.updatedAt.getTime() - a.updatedAt.getTime();
+      return b.chat.updatedAt.getTime() - a.chat.updatedAt.getTime();
     });
 
     return { chats: visible, total };

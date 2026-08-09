@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
-import { ChatDto } from 'src/application/dtos/chat.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import DeleteChatDto from 'src/modules/chat/grpc/dtos/delete-chat.dto';
 import { IChatUserStateRepository } from 'src/domain/repositories/chat-user.repository';
@@ -10,6 +9,8 @@ import {
   NotAuthorizedException,
 } from 'src/shared/exceptions/infra.exceptions';
 import { IDeleteChatUseCase } from '../interfaces/delete-chat.interface';
+import { Chat } from '@/domain/entities/chat.entity';
+import { ChatUserState } from '@/domain/entities/chat-user-state.entity';
 
 @Injectable()
 export class DeleteChatUseCase implements IDeleteChatUseCase {
@@ -24,7 +25,9 @@ export class DeleteChatUseCase implements IDeleteChatUseCase {
    * @param dto Data containing the chatId and userId for deletion
    * @returns The deleted Chat entity as DTO
    */
-  async execute(dto: DeleteChatDto): Promise<ChatDto> {
+  async execute(
+    dto: DeleteChatDto,
+  ): Promise<{ chat: Chat; state: ChatUserState }> {
     const { chatId, userId } = dto;
 
     // Validate input
@@ -56,6 +59,6 @@ export class DeleteChatUseCase implements IDeleteChatUseCase {
 
     this._logger.log(`Deleted chat ${chatId} by user ${userId}`);
 
-    return ChatDto.fromDomain(chat, state);
+    return { chat, state };
   }
 }

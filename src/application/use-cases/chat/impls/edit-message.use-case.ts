@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { IMessageRepository } from 'src/domain/repositories/message.repository';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
 import EditMessageDto from 'src/modules/chat/grpc/dtos/edit-message.dto';
-import { MessageDto } from 'src/application/dtos/message.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { IChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
 import { CHAT_TOPICS } from 'src/infrastructure/kafka/chat-topics';
@@ -16,6 +15,7 @@ import {
   NotAuthorizedException,
 } from 'src/shared/exceptions/infra.exceptions';
 import { IEditMessageUseCase } from '../interfaces/edit-message.interface';
+import { Message } from '@/domain/entities/message.entity';
 
 @Injectable()
 export class EditMessageUseCase implements IEditMessageUseCase {
@@ -32,7 +32,7 @@ export class EditMessageUseCase implements IEditMessageUseCase {
    * @returns Promise<MessageDto>
    * @throws DomainException if message not found, not sender, or content invalid
    */
-  async execute(command: EditMessageDto): Promise<MessageDto> {
+  async execute(command: EditMessageDto): Promise<Message> {
     const { messageId, userId, content, chatId } = command;
 
     if (!chatId || !messageId || !userId || !content?.trim()) {
@@ -89,6 +89,6 @@ export class EditMessageUseCase implements IEditMessageUseCase {
       },
     });
 
-    return MessageDto.fromDomain(updatedMessage);
+    return updatedMessage;
   }
 }

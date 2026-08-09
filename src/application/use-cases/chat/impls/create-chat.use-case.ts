@@ -4,7 +4,6 @@ import { v4 as uuidV4 } from 'uuid';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
 import { DomainException } from 'src/domain/exceptions/_base.exception';
 import { Chat } from 'src/domain/entities/chat.entity';
-import { ChatDto } from 'src/application/dtos/chat.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { IChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
 import { CHAT_TOPICS } from 'src/infrastructure/kafka/chat-topics';
@@ -13,6 +12,8 @@ import CreateChatDto from 'src/modules/chat/grpc/dtos/create-chat.dto';
 import { BadRequestException } from 'src/shared/exceptions/infra.exceptions';
 import { ICreateChatUseCase } from '../interfaces/create-chat.interface';
 import { IUserClient } from 'src/infrastructure/grpc/clients/user/user-client.interface';
+import { ChatUserState } from '@/domain/entities/chat-user-state.entity';
+import { ChatResponseMapper } from '@/modules/chat/mappers/chat.mapper';
 
 @Injectable()
 export class CreateChatUseCase implements ICreateChatUseCase {
@@ -24,7 +25,9 @@ export class CreateChatUseCase implements ICreateChatUseCase {
     private readonly _userClient: IUserClient,
   ) {}
 
-  async execute(command: CreateChatDto): Promise<ChatDto> {
+  async execute(
+    command: CreateChatDto,
+  ): Promise<{ chat: Chat; state: ChatUserState }> {
     const { studentId, instructorId, role } = command;
 
     this._logger.info(
@@ -52,7 +55,7 @@ export class CreateChatUseCase implements ICreateChatUseCase {
         existingChat.id,
         role === 'student' ? studentId : instructorId,
       );
-      return ChatDto.fromDomain(existingChat, state);
+      return { chat: existingChat, state };
     }
 
     // Validate relationship via user service
@@ -89,7 +92,6 @@ export class CreateChatUseCase implements ICreateChatUseCase {
     // Create user state for the requesting user
     const requesterId = role === 'student' ? studentId : instructorId;
     const state = await this._stateRepo.getOrCreate(savedChat.id, requesterId);
-    const chatDto = ChatDto.fromDomain(savedChat, state);
 
     // Publish Kafka event => WS consumer emits chat:created to both users
     await this._chatEventBus.publish({
@@ -98,13 +100,13 @@ export class CreateChatUseCase implements ICreateChatUseCase {
         chatId: savedChat.id,
         studentId: savedChat.studentId,
         instructorId: savedChat.instructorId,
-        chat: chatDto.toWsPayload(),
+        chat: ChatResponseMapper.toWsPayload(savedChat, state),
       } as any,
     });
 
-    this._logger.info(
+    this._logger.debug(
       `Chat ${chatId} created for ${studentId} <-> ${instructorId}`,
     );
-    return chatDto;
+    return { chat: savedChat, state };
   }
 }

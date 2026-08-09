@@ -3,7 +3,6 @@ import { v4 as uuidV4 } from 'uuid';
 
 import { IDiscussionRoomRepository } from 'src/domain/repositories/discussion-room.repository';
 import { DiscussionRoom } from 'src/domain/entities/discussion.entity';
-import { DiscussionRoomDto } from '../../../dtos/discussion-room.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { CreateDiscussionRoomRequest } from 'src/infrastructure/grpc/generated/chat_service';
 import { DiscussionService } from 'src/application/services/discussion.service';
@@ -24,7 +23,7 @@ export class CreateOrGetDiscussionRoomUseCase implements ICreateOrGetDiscussionR
 
   async execute(
     command: CreateDiscussionRoomRequest,
-  ): Promise<DiscussionRoomDto> {
+  ): Promise<DiscussionRoom> {
     const { courseId, userId, userRole } = command;
 
     console.log('Discussion get Command: ' + JSON.stringify(command, null, 2));
@@ -48,7 +47,7 @@ export class CreateOrGetDiscussionRoomUseCase implements ICreateOrGetDiscussionR
         );
       }
 
-      return DiscussionRoomDto.fromDomain(existingRoom);
+      return existingRoom;
     }
 
     const course = await this._courseClient.getCourse(courseId);
@@ -85,6 +84,6 @@ export class CreateOrGetDiscussionRoomUseCase implements ICreateOrGetDiscussionR
     this._logger.log(
       `Created discussion room ${saved.id} for course ${courseId}`,
     );
-    return DiscussionRoomDto.fromDomain(saved);
+    return saved;
   }
 }

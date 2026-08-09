@@ -1,4 +1,4 @@
-import { DiscussionMessageDto } from '../../../dtos/discussion-message.dto';
+import { DiscussionMessage } from '@/domain/entities/discussion.entity';
 
 interface SendDiscussionMessageCommand {
   roomId: string;
@@ -11,5 +11,5 @@ interface SendDiscussionMessageCommand {
 export abstract class ISendDiscussionMessageUseCase {
   abstract execute(
     command: SendDiscussionMessageCommand,
-  ): Promise<DiscussionMessageDto>;
+  ): Promise<DiscussionMessage>;
 }

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IMessageRepository } from 'src/domain/repositories/message.repository';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
-import { MessageDto } from 'src/application/dtos/message.dto';
 import GetMessagesDto from 'src/modules/chat/grpc/dtos/get-messages.dto';
 import { ChatNotFoundException } from 'src/domain/exceptions/chat.exceptions';
 import {
@@ -9,6 +8,7 @@ import {
   NotAuthorizedException,
 } from 'src/shared/exceptions/infra.exceptions';
 import { IGetChatMessagesUseCase } from '../interfaces/get-chat-messages.interface';
+import { Message } from '@/domain/entities/message.entity';
 
 @Injectable()
 export class GetChatMessagesUseCase implements IGetChatMessagesUseCase {
@@ -19,7 +19,7 @@ export class GetChatMessagesUseCase implements IGetChatMessagesUseCase {
 
   async execute(
     dto: GetMessagesDto,
-  ): Promise<{ messages: MessageDto[]; total: number }> {
+  ): Promise<{ messages: Message[]; total: number }> {
     const { chatId, pagination, userId } = dto;
 
     if (!chatId || !userId) {
@@ -49,7 +49,7 @@ export class GetChatMessagesUseCase implements IGetChatMessagesUseCase {
     );
 
     return {
-      messages: messages.map((m) => MessageDto.fromDomain(m)),
+      messages: messages,
       total,
     };
   }

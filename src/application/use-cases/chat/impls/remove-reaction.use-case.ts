@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { IMessageRepository } from 'src/domain/repositories/message.repository';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
 import { ILoggerService } from 'src/application/ports/logger.service';
-import { MessageDto } from 'src/application/dtos/message.dto';
 import RemoveReactionDto from 'src/modules/chat/grpc/dtos/remove-reaction.dto';
 import { IChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
 import { CHAT_TOPICS } from 'src/infrastructure/kafka/chat-topics';
@@ -16,6 +15,7 @@ import {
   NotAuthorizedException,
 } from 'src/shared/exceptions/infra.exceptions';
 import { IRemoveReactionUseCase } from '../interfaces/remove-reaction.interface';
+import { Message } from '@/domain/entities/message.entity';
 
 @Injectable()
 export class RemoveReactionUseCase implements IRemoveReactionUseCase {
@@ -26,7 +26,7 @@ export class RemoveReactionUseCase implements IRemoveReactionUseCase {
     private readonly _logger: ILoggerService,
   ) {}
 
-  async execute(command: RemoveReactionDto): Promise<MessageDto> {
+  async execute(command: RemoveReactionDto): Promise<Message> {
     const { messageId, userId, reactionId } = command;
 
     if (!messageId || !userId || !reactionId) {
@@ -72,6 +72,6 @@ export class RemoveReactionUseCase implements IRemoveReactionUseCase {
     this._logger.info(
       `Reaction${reactionId ? ` (${reactionId})` : ''} removed for message ${messageId} in chat ${message.chatId}`,
     );
-    return MessageDto.fromDomain(updated);
+    return updated;
   }
 }

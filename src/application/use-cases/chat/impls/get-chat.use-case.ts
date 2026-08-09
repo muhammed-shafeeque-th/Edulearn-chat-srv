@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
-import { ChatDto } from 'src/application/dtos/chat.dto';
 import GetChatDto from 'src/modules/chat/grpc/dtos/get-chat.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { IChatUserStateRepository } from 'src/domain/repositories/chat-user.repository';
 import { ChatNotFoundException } from 'src/domain/exceptions/chat.exceptions';
 import { BadRequestException } from 'src/shared/exceptions/infra.exceptions';
 import { IGetChatUseCase } from '../interfaces/get-chat.interface';
+import { Chat } from '@/domain/entities/chat.entity';
+import { ChatUserState } from '@/domain/entities/chat-user-state.entity';
 
 @Injectable()
 export class GetChatUseCase implements IGetChatUseCase {
@@ -20,7 +21,7 @@ export class GetChatUseCase implements IGetChatUseCase {
    * @param dto Data containing the chatId to get chat
    * @returns The found Chat entity as DTO
    */
-  async execute(dto: GetChatDto): Promise<ChatDto> {
+  async execute(dto: GetChatDto): Promise<{ chat: Chat; state: ChatUserState }> {
     const { chatId, userId } = dto;
 
     // Validate input
@@ -40,6 +41,6 @@ export class GetChatUseCase implements IGetChatUseCase {
 
     // Convert domain model to DTO and return
     this._logger.log(`Fetched chat ${chatId}`);
-    return ChatDto.fromDomain(chat, state);
+    return { chat, state };
   }
 }
