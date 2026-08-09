@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { IMessageRepository } from 'src/domain/repositories/message.repository';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
 import MarkMessageSeenDto from 'src/modules/chat/grpc/dtos/mark-message-seen.dto';
-import { ChatDto } from 'src/application/dtos/chat.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { IChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
 import { IChatUserStateRepository } from 'src/domain/repositories/chat-user.repository';
@@ -13,6 +12,8 @@ import {
   NotAuthorizedException,
 } from 'src/shared/exceptions/infra.exceptions';
 import { IMarkMessagesAsReadUseCase } from '../interfaces/mark-messages-as-read.interface';
+import { Chat } from '@/domain/entities/chat.entity';
+import { ChatUserState } from '@/domain/entities/chat-user-state.entity';
 
 @Injectable()
 export class MarkMessagesAsReadUseCase implements IMarkMessagesAsReadUseCase {
@@ -28,7 +29,7 @@ export class MarkMessagesAsReadUseCase implements IMarkMessagesAsReadUseCase {
    * Marks all unread messages in a chat as read for a user,
    * excluding messages sent by the user themselves.
    */
-  async execute(dto: MarkMessageSeenDto): Promise<ChatDto> {
+  async execute(dto: MarkMessageSeenDto): Promise<{ chat: Chat; state: ChatUserState }> {
     const { chatId, userId } = dto;
 
     // Validate input
@@ -69,6 +70,6 @@ export class MarkMessagesAsReadUseCase implements IMarkMessagesAsReadUseCase {
       chatId,
       userId,
     });
-    return ChatDto.fromDomain(chat, state);
+    return {chat, state};
   }
 }

@@ -1,5 +1,5 @@
 import SendMessageCommand from 'src/modules/chat/grpc/dtos/send-message.dto';
-import { MessageDto } from '../../../dtos/message.dto';
+import { Message } from '@/domain/entities/message.entity';
 
 export abstract class ISendMessageUseCase {
   /**
@@ -9,5 +9,5 @@ export abstract class ISendMessageUseCase {
    * @returns Promise<MessageDto>
    * @throws DomainException if the chat does not exist or user not participant
    */
-  abstract execute(command: SendMessageCommand): Promise<MessageDto>;
+  abstract execute(command: SendMessageCommand): Promise<Message>;
 }

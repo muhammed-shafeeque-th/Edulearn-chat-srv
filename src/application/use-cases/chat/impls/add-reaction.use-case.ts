@@ -4,7 +4,6 @@ import { IMessageRepository } from 'src/domain/repositories/message.repository';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
 import ReactMessageDto from 'src/modules/chat/grpc/dtos/react-message.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
-import { MessageDto } from 'src/application/dtos/message.dto';
 import { v4 as uuidV4 } from 'uuid';
 import { IChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
 import { Message } from 'src/domain/entities/message.entity';
@@ -28,7 +27,7 @@ export class ReactMessageUseCase implements IReactMessageUseCase {
     private readonly _logger: ILoggerService,
   ) {}
 
-  async execute(command: ReactMessageDto): Promise<MessageDto> {
+  async execute(command: ReactMessageDto): Promise<Message> {
     const { messageId, userId, emoji } = command;
 
     if (!messageId || !userId || !emoji?.trim()) {
@@ -93,6 +92,6 @@ export class ReactMessageUseCase implements IReactMessageUseCase {
     this._logger.info(
       `Reaction updated for message ${messageId} in chat ${message.chatId}`,
     );
-    return MessageDto.fromDomain(updatedMessage);
+    return updatedMessage;
   }
 }

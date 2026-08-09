@@ -1,4 +1,4 @@
-import { MessageDto } from '../../../dtos/message.dto';
+import { Message } from '@/domain/entities/message.entity';
 import GetMessagesDto from 'src/modules/chat/grpc/dtos/get-messages.dto';
 
 export abstract class IGetChatMessagesUseCase {
@@ -9,5 +9,5 @@ export abstract class IGetChatMessagesUseCase {
    */
   abstract execute(
     dto: GetMessagesDto,
-  ): Promise<{ messages: MessageDto[]; total: number }>;
+  ): Promise<{ messages: Message[]; total: number }>;
 }

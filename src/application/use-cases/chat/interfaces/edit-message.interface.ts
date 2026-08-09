@@ -1,5 +1,5 @@
+import { Message } from '@/domain/entities/message.entity';
 import EditMessageDto from 'src/modules/chat/grpc/dtos/edit-message.dto';
-import { MessageDto } from '../../../dtos/message.dto';
 
 export abstract class IEditMessageUseCase {
   /**
@@ -8,5 +8,5 @@ export abstract class IEditMessageUseCase {
    * @returns Promise<MessageDto>
    * @throws DomainException if message not found, not sender, or content invalid
    */
-  abstract execute(command: EditMessageDto): Promise<MessageDto>;
+  abstract execute(command: EditMessageDto): Promise<Message>;
 }

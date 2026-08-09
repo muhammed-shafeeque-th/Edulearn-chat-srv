@@ -4,7 +4,6 @@ import { v4 as uuidV4 } from 'uuid';
 import { IMessageRepository } from 'src/domain/repositories/message.repository';
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
 import SendMessageCommand from 'src/modules/chat/grpc/dtos/send-message.dto';
-import { MessageDto } from 'src/application/dtos/message.dto';
 import { Message } from 'src/domain/entities/message.entity';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { IChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
@@ -15,6 +14,7 @@ import {
   NotAuthorizedException,
 } from 'src/shared/exceptions/infra.exceptions';
 import { ISendMessageUseCase } from '../interfaces/send-message.interface';
+import { MessageMapper } from '@/modules/chat/mappers/message.mapper';
 
 @Injectable()
 export class SendMessageUseCase implements ISendMessageUseCase {
@@ -25,7 +25,7 @@ export class SendMessageUseCase implements ISendMessageUseCase {
     private readonly _chatEventBus: IChatEventBusPort,
   ) {}
 
-  async execute(command: SendMessageCommand): Promise<MessageDto> {
+  async execute(command: SendMessageCommand): Promise<Message> {
     const { chatId, senderId, content, idempotencyKey } = command;
 
     this._logger.info(
@@ -51,7 +51,7 @@ export class SendMessageUseCase implements ISendMessageUseCase {
       chatId,
       idempotencyKey,
     );
-    if (existing) return MessageDto.fromDomain(existing);
+    if (existing) return existing;
 
     // ordering for messages
     const sequence = await this._messageRepository.nextSequence(chatId);
@@ -74,18 +74,17 @@ export class SendMessageUseCase implements ISendMessageUseCase {
     await this._chatRepository.save(
       chat.withLastMessage(message.id, message.sequence),
     );
-    const messageDto = MessageDto.fromDomain(message);
 
     // Publish Kafka event => WS consumer emits message:new
     await this._chatEventBus.publish({
       topic: CHAT_TOPICS.MESSAGE_SENT,
       payload: {
         chatId,
-        message: messageDto.toWsPayload?.() ?? messageDto,
+        message: MessageMapper.toWsPayload(message) ?? message,
       } as any,
     });
 
     this._logger.debug(`Message saved chatId=${chatId} seq=${sequence}`);
-    return messageDto;
+    return message;
   }
 }
