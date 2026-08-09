@@ -7,7 +7,6 @@ import {
   DiscussionMessage,
   SenderRole,
 } from 'src/domain/entities/discussion.entity';
-import { DiscussionMessageDto } from '../../../dtos/discussion-message.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { IChatEventBusPort } from '../../../ports/chat-event-bus.port';
 import { CHAT_TOPICS } from 'src/infrastructure/kafka/chat-topics';
@@ -18,6 +17,7 @@ import {
 } from 'src/shared/exceptions/infra.exceptions';
 import { DiscussionRoomNotFoundException } from 'src/domain/exceptions/discussion.exceptions';
 import { ISendDiscussionMessageUseCase } from '../interfaces/send-discussion-message.interface';
+import { DiscussionMessageMapper } from '@/modules/chat/mappers/discussion-message.mapper';
 
 interface SendDiscussionMessageCommand {
   roomId: string;
@@ -39,7 +39,7 @@ export class SendDiscussionMessageUseCase implements ISendDiscussionMessageUseCa
 
   async execute(
     command: SendDiscussionMessageCommand,
-  ): Promise<DiscussionMessageDto> {
+  ): Promise<DiscussionMessage> {
     const { roomId, senderId, content, idempotencyKey } = command;
 
     if (!roomId || !senderId || !content?.trim() || !idempotencyKey?.trim()) {
@@ -73,7 +73,7 @@ export class SendDiscussionMessageUseCase implements ISendDiscussionMessageUseCa
       roomId,
       idempotencyKey,
     );
-    if (existing) return DiscussionMessageDto.fromDomain(existing);
+    if (existing) return existing;
 
     // Generate sequence
     const sequence = await this._messageRepository.nextSequence(roomId);
@@ -100,7 +100,6 @@ export class SendDiscussionMessageUseCase implements ISendDiscussionMessageUseCa
       room.withLastMessage(message.id, message.sequence),
     );
 
-    const messageDto = DiscussionMessageDto.fromDomain(message);
 
     // Publish Kafka event => WS consumer emits discussion:message:new
     await this._chatEventBus.publish({
@@ -108,13 +107,13 @@ export class SendDiscussionMessageUseCase implements ISendDiscussionMessageUseCa
       payload: {
         roomId,
         courseId: room.courseId,
-        message: messageDto.toWsPayload?.() ?? messageDto,
+        message: DiscussionMessageMapper.toWsPayload(message) ?? message,
       } as any,
     });
 
     this._logger.debug(
       `Discussion message saved roomId=${roomId} seq=${sequence}`,
     );
-    return messageDto;
+    return message;
   }
 }

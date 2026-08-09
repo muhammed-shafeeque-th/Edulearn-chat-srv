@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
 import { IDiscussionMessageRepository } from 'src/domain/repositories/discussion-message.repository';
-import { DiscussionMessageDto } from '../../../dtos/discussion-message.dto';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { IGetDiscussionMessagesUseCase } from '../interfaces/get-discussion-messages.interface';
+import { DiscussionMessage } from '@/domain/entities/discussion.entity';
 
 interface GetDiscussionMessagesCommand {
   roomId: string;
@@ -20,7 +20,7 @@ export class GetDiscussionMessagesUseCase implements IGetDiscussionMessagesUseCa
 
   async execute(
     command: GetDiscussionMessagesCommand,
-  ): Promise<{ messages: DiscussionMessageDto[]; total: number }> {
+  ): Promise<{ messages: DiscussionMessage[]; total: number }> {
     const { roomId, pagination } = command;
     const page = pagination?.page ?? 1;
     const pageSize = pagination?.pageSize ?? 50;
@@ -36,7 +36,7 @@ export class GetDiscussionMessagesUseCase implements IGetDiscussionMessagesUseCa
     );
 
     return {
-      messages: messages.map((m) => DiscussionMessageDto.fromDomain(m)),
+      messages,
       total,
     };
   }
