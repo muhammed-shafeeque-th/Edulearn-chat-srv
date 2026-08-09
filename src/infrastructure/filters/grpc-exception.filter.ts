@@ -1,14 +1,19 @@
-import { BadRequestException, Catch, ExceptionFilter } from '@nestjs/common';
+import {
+  // ArgumentsHost,
+  BadRequestException,
+  Catch,
+  ExceptionFilter,
+} from '@nestjs/common';
 import { status, Metadata as GrpcMetadata } from '@grpc/grpc-js';
 import { RpcException } from '@nestjs/microservices';
-import { throwError } from 'rxjs';
 import { GrpcExceptionMapper } from './grpc-exception.mapper';
 import { BaseException } from 'src/shared/exceptions/base-exception';
-import { ILoggerService } from 'src/application/ports/logger.service';
+import { throwError } from 'rxjs';
+import { ILoggerService } from '@/application/ports/logger.service';
 
 @Catch()
 export class GrpcExceptionFilter implements ExceptionFilter {
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(private readonly _logger: ILoggerService) {}
 
   catch(exception: any) {
     // const _ctx = host.switchToRpc();
@@ -20,10 +25,6 @@ export class GrpcExceptionFilter implements ExceptionFilter {
 
     // Handle DomainException by returning the full grpc ServiceError (with metadata)
     if (exception instanceof BaseException) {
-      this.logger.warn(`DomainException: ${exception.message}`, {
-        ctx: GrpcExceptionFilter.name,
-        stack: exception.stack,
-      });
       // The client will get all fields (code, message, metadata, etc.)
       const grpcError = GrpcExceptionMapper.toGrpc(exception);
 
@@ -54,6 +55,14 @@ export class GrpcExceptionFilter implements ExceptionFilter {
         'code' in error &&
         'message' in error
       ) {
+        this._logger.error(
+          `RpcException error: ${exception?.message || exception}`,
+          {
+            ctx: GrpcExceptionFilter.name,
+            stack: exception?.stack,
+            ...exception,
+          },
+        );
         code = Number((error as any).code) ?? status.UNKNOWN;
         message = String((error as any).message) ?? 'Unknown gRPC error';
         if ('metadata' in error && error.metadata instanceof GrpcMetadata) {
@@ -67,7 +76,7 @@ export class GrpcExceptionFilter implements ExceptionFilter {
 
     // All other/unexpected errors
     else {
-      this.logger.error(
+      this._logger.error(
         `Unexpected error: ${exception?.message || exception}`,
         {
           ctx: GrpcExceptionFilter.name,
