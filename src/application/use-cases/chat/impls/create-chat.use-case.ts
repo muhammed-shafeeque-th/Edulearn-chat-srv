@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { v4 as uuidV4 } from 'uuid';
 
 import { IChatRepository } from 'src/domain/repositories/chat.repository';
-import { DomainException } from 'src/domain/exceptions/_base.exception';
 import { Chat } from 'src/domain/entities/chat.entity';
 import { ILoggerService } from 'src/application/ports/logger.service';
 import { IChatEventBusPort } from 'src/application/ports/chat-event-bus.port';
@@ -14,6 +13,7 @@ import { ICreateChatUseCase } from '../interfaces/create-chat.interface';
 import { IUserClient } from 'src/infrastructure/grpc/clients/user/user-client.interface';
 import { ChatUserState } from '@/domain/entities/chat-user-state.entity';
 import { ChatResponseMapper } from '@/modules/chat/mappers/chat.mapper';
+import { DomainException } from '@/domain/exceptions/domain.exception';
 
 @Injectable()
 export class CreateChatUseCase implements ICreateChatUseCase {

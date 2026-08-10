@@ -6,7 +6,6 @@ import { ICreateChatUseCase } from 'src/application/use-cases/chat/interfaces/cr
 import { IEditMessageUseCase } from 'src/application/use-cases/chat/interfaces/edit-message.interface';
 import { IDeleteMessageUseCase } from 'src/application/use-cases/chat/interfaces/delete-message.interface';
 import { IReactMessageUseCase } from 'src/application/use-cases/chat/interfaces/add-reaction.interface';
-import { GrpcExceptionFilter } from '@/infrastructure/__filters/grpc-exception.filter';
 import { GrpcMethod } from '@nestjs/microservices';
 import {
   AddReactionRequest,
@@ -53,6 +52,7 @@ import { ChatResponseMapper } from '../mappers/chat.mapper';
 import { MessageMapper } from '../mappers/message.mapper';
 import { DiscussionMessageMapper } from '../mappers/discussion-message.mapper';
 import { DiscussionRoomMapper } from '../mappers/discussion-room.mapper';
+import { GrpcExceptionFilter } from '@/infrastructure/filters/grpc-exception.filter';
 
 @Controller()
 @UseFilters(GrpcExceptionFilter)
