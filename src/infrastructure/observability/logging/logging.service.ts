@@ -22,7 +22,6 @@ export class LoggerService implements ILoggerService {
   }
 
   warn(message: string, context?: LogContext): void {
-    // Renamed from warning to warn for consistency with Winston
     this.logger.warn(message, context);
   }
 

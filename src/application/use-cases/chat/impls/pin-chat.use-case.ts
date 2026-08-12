@@ -58,7 +58,7 @@ export class PinChatUseCase implements IPinChatUseCase {
     state.pin();
     await this.stateRepository.save(state);
 
-    this._logger.log(`Pinned chat ${chatId} for user ${userId}`);
+    this._logger.debug(`Pinned chat ${chatId} for user ${userId}`);
     return { chat, state };
   }
 }
