@@ -60,7 +60,7 @@ export class UnPinChatUseCase implements IUnPinChatUseCase {
     state.unpin();
     await this._stateRepo.save(state);
 
-    this._logger.log(`Unpinned chat ${chatId} for user ${userId}`);
+    this._logger.debug(`Unpinned chat ${chatId} for user ${userId}`);
 
     return { chat, state };
   }

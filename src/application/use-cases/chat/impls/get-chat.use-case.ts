@@ -40,7 +40,7 @@ export class GetChatUseCase implements IGetChatUseCase {
     const state = await this._stateRepo.getOrCreate(chatId, userId);
 
     // Convert domain model to DTO and return
-    this._logger.log(`Fetched chat ${chatId}`);
+    this._logger.debug(`Fetched chat ${chatId}`);
     return { chat, state };
   }
 }

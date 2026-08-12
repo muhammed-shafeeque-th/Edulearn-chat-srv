@@ -55,9 +55,9 @@ export class DeleteChatUseCase implements IDeleteChatUseCase {
     state.archive();
     await this._stateRepo.save(state);
 
-    this._logger.log(`Chat archived chatId=${chatId} userId=${userId}`);
+    this._logger.debug(`Chat archived chatId=${chatId} userId=${userId}`);
 
-    this._logger.log(`Deleted chat ${chatId} by user ${userId}`);
+    this._logger.debug(`Deleted chat ${chatId} by user ${userId}`);
 
     return { chat, state };
   }

@@ -81,7 +81,7 @@ export class CreateOrGetDiscussionRoomUseCase implements ICreateOrGetDiscussionR
     });
 
     const saved = await this._roomRepository.save(room);
-    this._logger.log(
+    this._logger.debug(
       `Created discussion room ${saved.id} for course ${courseId}`,
     );
     return saved;
