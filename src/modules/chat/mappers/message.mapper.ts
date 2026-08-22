@@ -9,10 +9,10 @@ export class MessageMapper {
       senderId: message.senderId,
       content: message.content,
       sequence: message.sequence,
-      createdAt: message.metadata.toISOString(),
+      createdAt: message.timestamp.toISOString(),
       updatedAt: message.editedAt
         ? message.editedAt.toISOString()
-        : message.metadata.toISOString(),
+        : message.timestamp.toISOString(),
       reactions:
         message.reactions?.map((m) => ({
           emoji: m.emoji,
